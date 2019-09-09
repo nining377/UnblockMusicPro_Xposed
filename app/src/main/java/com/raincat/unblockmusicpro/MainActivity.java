@@ -39,7 +39,7 @@ public class MainActivity extends PermissionProxyActivity {
     private Context context;
     private RelativeLayout rela_enable, rela_hide;
     private CheckBox cb_enable, cb_hide;
-    private TextView tv_update, tv_faq, tv_version, tv_perfect[];
+    private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
     private ImageView iv_question;
     private RadioGroup rg_origin;
 
@@ -103,6 +103,7 @@ public class MainActivity extends PermissionProxyActivity {
             e.printStackTrace();
         }
 
+        tv_script.setText(localVersion);
         int app_version = share.getInt("app_version", 0);
         if (app_version < BuildConfig.VERSION_CODE) {
             String update = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "update.txt");
@@ -117,6 +118,7 @@ public class MainActivity extends PermissionProxyActivity {
         tv_update = (TextView) findViewById(R.id.tv_update);
         tv_faq = (TextView) findViewById(R.id.tv_faq);
         tv_version = (TextView) findViewById(R.id.tv_version);
+        tv_script = (TextView) findViewById(R.id.tv_script);
         tv_perfect = new TextView[2];
         tv_perfect[0] = (TextView) findViewById(R.id.tv_perfect1);
         tv_perfect[1] = (TextView) findViewById(R.id.tv_perfect2);

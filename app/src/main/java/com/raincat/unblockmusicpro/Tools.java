@@ -33,7 +33,7 @@ public class Tools {
     final static int originString[] = new int[]{R.string.kuwo, R.string.migu, R.string.kugou, R.string.qq};
     final static String State = "[ \"`pgrep node`\" != \"\" ] && echo YES";
     final static String Stop = "killall -9 node >/dev/null 2>&1";
-    final static String nowVersion = "0.19.0";
+    final static String nowVersion = "0.19.1";
     final static String message = "酷我：音质高，部分可下载无损\n" +
             "咪咕：酷我没有的歌用咪咕试试\n" +
             "酷狗：同上\n" +

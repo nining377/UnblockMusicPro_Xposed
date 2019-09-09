@@ -8,6 +8,7 @@
     <string name="origin_priority">音源优先级</string>
     <string name="other">其他</string>
     <string name="version">UnBlockMusic Pro版本</string>
+    <string name="script">脚本版本</string>
     <string name="perfect">最优适配版本</string>
 
     <string name="checking_file">检查文件完整性……</string>
