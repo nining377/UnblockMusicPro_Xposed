@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">UnblockMusic Pro</string>
+
+    <string name="log">日志</string>
+    <string name="setting">设置</string>
+    <string name="enable">启用模块</string>
+    <string name="hide">隐藏本模块图标</string>
+    <string name="origin_priority">音源优先级</string>
+    <string name="other">其他</string>
+    <string name="version">UnBlockMusic Pro版本</string>
+    <string name="perfect">最优适配版本</string>
+
+    <string name="checking_file">检查文件完整性……</string>
+
+    <string name="kuwo">酷我</string>
+    <string name="migu">咪咕</string>
+    <string name="qq">QQ</string>
+    <string name="kugou">酷狗</string>
+
+    <string name="menu_clean">清除Log</string>
+    <string name="menu_update">更新日志</string>
+    <string name="menu_faq">问题解答</string>
+
+    <string name="Module_is_Not_Active">模块未激活</string>
+</resources>

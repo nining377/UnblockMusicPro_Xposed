@@ -1,0 +1,16 @@
+.git
+.npmignore
+.gitignore
+.dockerignore
+
+LICENSE
+Procfile
+*.md
+
+node_modules
+npm-debug.log
+
+Dockerfile*
+*.yml
+hooks/
+browser/
