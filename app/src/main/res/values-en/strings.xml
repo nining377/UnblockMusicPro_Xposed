@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">UnBlockMusic Pro</string>
 
-    <string name="log">Log</string>
+    <string name="log">Print Log to Xposed (debug)</string>
     <string name="setting">Setting</string>
     <string name="enable">Enable Module</string>
     <string name="hide">Hide Module</string>

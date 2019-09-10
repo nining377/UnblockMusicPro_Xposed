@@ -48,4 +48,8 @@ class Setting {
     static boolean getEnable() {
         return getModuleSharedPreferences().getBoolean("enable", true);
     }
+
+    static boolean getLog() {
+        return getModuleSharedPreferences().getBoolean("log", false);
+    }
 }

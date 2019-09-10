@@ -80,7 +80,16 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             if (processName.equals(Tools.HOOK_NAME)) {
                                 boolean check = initData(context);
                                 if (check) {
-                                    Command start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + " -p 23338");
+                                    Command start;
+                                    if (!Setting.getLog())
+                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + " -p 23338");
+                                    else
+                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + " -p 23338") {
+                                            @Override
+                                            public void commandOutput(int id, String line) {
+                                                XposedBridge.log(line);
+                                            }
+                                        };
                                     Tools.shell(start);
                                     Toast.makeText(context, "成功运行，当前优先选择" + Setting.getOriginString() + "音源", Toast.LENGTH_LONG).show();
                                 } else

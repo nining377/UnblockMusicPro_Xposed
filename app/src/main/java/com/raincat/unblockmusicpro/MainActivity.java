@@ -37,8 +37,8 @@ import java.io.File;
 
 public class MainActivity extends PermissionProxyActivity {
     private Context context;
-    private RelativeLayout rela_enable, rela_hide;
-    private CheckBox cb_enable, cb_hide;
+    private RelativeLayout rela_enable, rela_hide, rela_log;
+    private CheckBox cb_enable, cb_hide, cb_log;
     private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
     private ImageView iv_question;
     private RadioGroup rg_origin;
@@ -115,6 +115,7 @@ public class MainActivity extends PermissionProxyActivity {
     private void initView() {
         rela_enable = (RelativeLayout) findViewById(R.id.rela_enable);
         rela_hide = (RelativeLayout) findViewById(R.id.rela_hide);
+        rela_log = (RelativeLayout) findViewById(R.id.rela_log);
         tv_update = (TextView) findViewById(R.id.tv_update);
         tv_faq = (TextView) findViewById(R.id.tv_faq);
         tv_version = (TextView) findViewById(R.id.tv_version);
@@ -126,6 +127,7 @@ public class MainActivity extends PermissionProxyActivity {
         rg_origin = (RadioGroup) findViewById(R.id.rg_origin);
         cb_enable = (CheckBox) findViewById(R.id.cb_enable);
         cb_hide = (CheckBox) findViewById(R.id.cb_hide);
+        cb_log = (CheckBox) findViewById(R.id.cb_log);
 
         tv_version.setText(BuildConfig.VERSION_NAME);
         tv_perfect[0].setText("Google：4.3.1");
@@ -136,6 +138,7 @@ public class MainActivity extends PermissionProxyActivity {
         rg_origin.check(Tools.originResId[originIndex]);
         cb_enable.setChecked(share.getBoolean("enable", true));
         cb_hide.setChecked(share.getBoolean("hide", false));
+        cb_log.setChecked(share.getBoolean("log", false));
     }
 
     private void listener() {
@@ -180,6 +183,16 @@ public class MainActivity extends PermissionProxyActivity {
                 share.edit().putBoolean("hide", isChecked).apply();
                 handler.sendEmptyMessageDelayed(isChecked ? 0 : 1, 1000);
                 Toast.makeText(context, "操作成功！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        rela_log.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isChecked = !cb_log.isChecked();
+                cb_log.setChecked(isChecked);
+                share.edit().putBoolean("log", isChecked).apply();
+                Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
             }
         });
 

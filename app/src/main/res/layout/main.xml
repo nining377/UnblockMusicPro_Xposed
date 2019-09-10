@@ -69,6 +69,30 @@
                 android:clickable="false" />
         </RelativeLayout>
 
+        <RelativeLayout
+            android:id="@+id/rela_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:padding="15dp"
+                android:text="@string/log"
+                android:textColor="@color/colorText"
+                android:textSize="16sp" />
+
+            <CheckBox
+                android:id="@+id/cb_log"
+                android:layout_width="40dp"
+                android:layout_height="50dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:clickable="false" />
+        </RelativeLayout>
+
         <TextView
             android:id="@+id/tv_update"
             android:layout_width="match_parent"
