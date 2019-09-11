@@ -167,9 +167,12 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                                 Object request = param.args[0];
                                                 Field httpUrl = request.getClass().getDeclaredField("url");
                                                 httpUrl.setAccessible(true);
-                                                String url = httpUrl.get(request).toString();
-                                                if (!url.contains("eapi/ad/get?type_ids") && url.contains("eapi/ad")) {
-                                                    param.setResult(null);
+                                                Object urlObj = httpUrl.get(request);
+                                                if (urlObj.toString().contains("eapi/ad")) {
+                                                    Field url = urlObj.getClass().getDeclaredField("url");
+                                                    url.setAccessible(true);
+                                                    url.set(urlObj, "https://33.123.321.14/");
+                                                    param.args[0] = request;
                                                 }
                                             }
                                         }
