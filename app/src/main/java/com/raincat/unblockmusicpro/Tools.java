@@ -37,6 +37,7 @@ public class Tools {
     final static String HOOK_NAME = "com.netease.cloudmusic";
 
     final static String SDCardPath = Environment.getExternalStorageDirectory() + "/UnblockMusicPro";
+    final static String neteaseCachePath = Environment.getExternalStorageDirectory() + "/netease/cloudmusic/Ad";
     final static String Start = "./node app.js -o ";
     final static String origin[] = new String[]{"kuwo migu kugou qq", "migu kuwo kugou qq", "kugou kuwo migu qq", "qq kuwo migu kugou"};
     final static int originResId[] = new int[]{R.id.rb_a, R.id.rb_b, R.id.rb_c, R.id.rb_d};
@@ -68,6 +69,13 @@ public class Tools {
         throw new RuntimeException("can't get current process name");
     }
 
+    /**
+     * 从assets中拷贝文件
+     *
+     * @param context
+     * @param oldPath
+     * @param codePath
+     */
     static void copyFilesAssets(Context context, String oldPath, String codePath) {
         try {
             String fileNames[] = context.getAssets().list(oldPath);//获取assets目录下的所有文件及目录名
@@ -94,6 +102,12 @@ public class Tools {
         }
     }
 
+    /**
+     * 从SD卡中拷贝文件
+     *
+     * @param oldPath
+     * @param newPath
+     */
     static void copyFilesFromSD(String oldPath, String newPath) {
         try {
             File newFile = new File(newPath);
@@ -134,6 +148,12 @@ public class Tools {
         }
     }
 
+    /**
+     * 从SD卡中读取一个文件
+     *
+     * @param path
+     * @return
+     */
     static String loadFileFromSD(String path) {
         StringBuilder stringBuilder = new StringBuilder();
         File file = new File(path);
@@ -190,6 +210,11 @@ public class Tools {
         return false;
     }
 
+    /**
+     * ADB命令
+     *
+     * @param command
+     */
     static void shell(Command command) {
         try {
             RootTools.closeAllShells();
@@ -197,6 +222,60 @@ public class Tools {
         } catch (TimeoutException | RootDeniedException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 删除指定文件夹下所有文件及文件夹本身
+     *
+     * @param path
+     */
+    /**
+     * 删除文件夹以及目录下的文件
+     *
+     * @param filePath 被删除目录的文件路径
+     * @return 目录删除成功返回true，否则返回false
+     */
+    static boolean deleteDirectory(String filePath) {
+        boolean flag = false;
+        //如果filePath不以文件分隔符结尾，自动添加文件分隔符
+        if (!filePath.endsWith(File.separator)) {
+            filePath = filePath + File.separator;
+        }
+        File dirFile = new File(filePath);
+        if (!dirFile.exists() || !dirFile.isDirectory()) {
+            return false;
+        }
+        flag = true;
+        File[] files = dirFile.listFiles();
+        //遍历删除文件夹下的所有文件(包括子目录)
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].isFile()) {
+                //删除子文件
+                flag = deleteFile(files[i].getAbsolutePath());
+                if (!flag) break;
+            } else {
+                //删除子目录
+                flag = deleteDirectory(files[i].getAbsolutePath());
+                if (!flag) break;
+            }
+        }
+        if (!flag) return false;
+        //删除当前空目录
+        return dirFile.delete();
+    }
+
+    /**
+     * 删除单个文件
+     *
+     * @param filePath 被删除文件的文件名
+     * @return 文件删除成功返回true，否则返回false
+     */
+    static boolean deleteFile(String filePath) {
+        File file = new File(filePath);
+        if (file.isFile() && file.exists()) {
+            return file.delete();
+        }
+        return false;
     }
 
     static List<String> filterList(List<String> list, Pattern pattern) {

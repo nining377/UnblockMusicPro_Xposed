@@ -5,6 +5,7 @@
     <string name="log">Print Log to Xposed (debug)</string>
     <string name="setting">Setting</string>
     <string name="enable">Enable Module</string>
+    <string name="ad">Remove AD</string>
     <string name="hide">Hide Module</string>
     <string name="origin_priority">Origin Priority</string>
     <string name="other">Others</string>

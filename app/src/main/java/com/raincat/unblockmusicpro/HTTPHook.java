@@ -74,6 +74,11 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             final String processName = Tools.getCurrentProcessName(context);
                             //主进程脚本注入
                             if (processName.equals(Tools.HOOK_NAME)) {
+                                if (!initData(context))
+                                    return;
+                                if (Setting.getAd())
+                                    Tools.deleteDirectory(Tools.neteaseCachePath);
+                            } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(context)) {
                                     Command start;
                                     if (!Setting.getLog())
@@ -91,9 +96,6 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                     Toast.makeText(context, "文件完整性校验失败，请打开UnblockMusic Pro并同意存储卡访问权限!", Toast.LENGTH_LONG).show();
                                     return;
                                 }
-                            } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
-                                if (!initData(context))
-                                    return;
                             }
 
                             //强制HTTP走本地代理
@@ -148,7 +150,6 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         Object file = param.args[0];
                                         if (file instanceof File) {
                                             String path = param.args[0].toString();
-                                            XposedBridge.log(path);
                                             Matcher matcher = REX_MD5.matcher(path);
                                             if (matcher.find()) {
                                                 param.setResult(matcher.group());
@@ -156,6 +157,24 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         }
                                     }
                                 });
+
+                                //去广告
+                                if (Setting.getAd()) {
+                                    hookAllMethods(findClass("okhttp3.OkHttpClient", context.getClassLoader()), "newCall", new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                            if (param.args.length == 1) {
+                                                Object request = param.args[0];
+                                                Field httpUrl = request.getClass().getDeclaredField("url");
+                                                httpUrl.setAccessible(true);
+                                                String url = httpUrl.get(request).toString();
+                                                if (!url.contains("eapi/ad/get?type_ids") && url.contains("eapi/ad")) {
+                                                    param.setResult(null);
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
                             }
                         }
                     });
@@ -180,6 +199,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             }
 
             //对比SD卡与网易云内部脚本版本，不对则拷贝SD卡脚本文件到网易云内部
+            localVersion = "";
             if (codeVersion.length() != 0) {
                 JSONObject jsonObject = new JSONObject(codeVersion);
                 localVersion = jsonObject.getString("version");
@@ -191,6 +211,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             Tools.shell(command);
         } catch (JSONException e) {
             e.printStackTrace();
+            return false;
         }
 
         codeVersion = Tools.loadFileFromSD(codePath + File.separator + "package.json");

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
@@ -19,10 +20,14 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.stericson.RootShell.execution.Command;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+
+import de.robv.android.xposed.XposedBridge;
 
 /**
  * <pre>
@@ -36,8 +41,8 @@ import java.io.File;
 
 public class MainActivity extends PermissionProxyActivity {
     private Context context;
-    private RelativeLayout rela_enable, rela_hide, rela_log;
-    private CheckBox cb_enable, cb_hide, cb_log;
+    private RelativeLayout rela_enable, rela_ad, rela_hide, rela_log;
+    private CheckBox cb_enable, cb_ad, cb_hide, cb_log;
     private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
     private ImageView iv_question;
     private RadioGroup rg_origin;
@@ -71,9 +76,9 @@ public class MainActivity extends PermissionProxyActivity {
         checkPermission(context, new String[]{PERMISSION_EXTERNAL_STORAGE, PERMISSION_EXTERNAL_STORAGE2}, new OnPermissionResultListener() {
             @Override
             public void onResult(boolean get) {
-                if (get)
+                if (get) {
                     initData();
-                else
+                } else
                     finish();
             }
         });
@@ -113,8 +118,14 @@ public class MainActivity extends PermissionProxyActivity {
 
     private void initView() {
         rela_enable = (RelativeLayout) findViewById(R.id.rela_enable);
+        rela_ad = (RelativeLayout) findViewById(R.id.rela_ad);
         rela_hide = (RelativeLayout) findViewById(R.id.rela_hide);
         rela_log = (RelativeLayout) findViewById(R.id.rela_log);
+        cb_enable = (CheckBox) findViewById(R.id.cb_enable);
+        cb_ad = (CheckBox) findViewById(R.id.cb_ad);
+        cb_hide = (CheckBox) findViewById(R.id.cb_hide);
+        cb_log = (CheckBox) findViewById(R.id.cb_log);
+
         tv_update = (TextView) findViewById(R.id.tv_update);
         tv_faq = (TextView) findViewById(R.id.tv_faq);
         tv_version = (TextView) findViewById(R.id.tv_version);
@@ -122,11 +133,9 @@ public class MainActivity extends PermissionProxyActivity {
         tv_perfect = new TextView[2];
         tv_perfect[0] = (TextView) findViewById(R.id.tv_perfect1);
         tv_perfect[1] = (TextView) findViewById(R.id.tv_perfect2);
+
         iv_question = (ImageView) findViewById(R.id.iv_question);
         rg_origin = (RadioGroup) findViewById(R.id.rg_origin);
-        cb_enable = (CheckBox) findViewById(R.id.cb_enable);
-        cb_hide = (CheckBox) findViewById(R.id.cb_hide);
-        cb_log = (CheckBox) findViewById(R.id.cb_log);
 
         tv_version.setText(BuildConfig.VERSION_NAME);
         tv_perfect[0].setText("Google：4.3.1");
@@ -136,6 +145,7 @@ public class MainActivity extends PermissionProxyActivity {
         originIndex = share.getInt("origin", 0);
         rg_origin.check(Tools.originResId[originIndex]);
         cb_enable.setChecked(share.getBoolean("enable", true));
+        cb_ad.setChecked(share.getBoolean("ad", true));
         cb_hide.setChecked(share.getBoolean("hide", false));
         cb_log.setChecked(share.getBoolean("log", false));
     }
@@ -170,6 +180,16 @@ public class MainActivity extends PermissionProxyActivity {
                 boolean isChecked = !cb_enable.isChecked();
                 cb_enable.setChecked(isChecked);
                 share.edit().putBoolean("enable", isChecked).apply();
+                Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        rela_ad.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isChecked = !cb_ad.isChecked();
+                cb_ad.setChecked(isChecked);
+                share.edit().putBoolean("ad", isChecked).apply();
                 Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
             }
         });

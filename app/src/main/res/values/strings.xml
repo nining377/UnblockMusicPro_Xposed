@@ -4,6 +4,7 @@
     <string name="log">打印脚本日志到Xposed（调试）</string>
     <string name="setting">设置</string>
     <string name="enable">启用模块</string>
+    <string name="ad">去广告</string>
     <string name="hide">隐藏本模块图标</string>
     <string name="origin_priority">音源优先级</string>
     <string name="other">其他</string>

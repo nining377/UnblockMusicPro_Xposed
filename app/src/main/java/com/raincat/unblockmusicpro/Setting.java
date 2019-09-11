@@ -48,6 +48,10 @@ class Setting {
         return getModuleSharedPreferences().getBoolean("enable", true);
     }
 
+    static boolean getAd() {
+        return getModuleSharedPreferences().getBoolean("ad", true);
+    }
+
     static boolean getLog() {
         return getModuleSharedPreferences().getBoolean("log", false);
     }

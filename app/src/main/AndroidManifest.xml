@@ -20,6 +20,10 @@
         android:theme="@style/AppTheme">
 
         <meta-data
+            android:name="android.max_aspect"
+            android:value="2.1" />
+
+        <meta-data
             android:name="xposedmodule"
             android:value="true" />
         <meta-data
