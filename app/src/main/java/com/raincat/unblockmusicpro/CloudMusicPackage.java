@@ -34,7 +34,6 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
 /**
  * <pre>
  *     author : RainCat
- *     org    : Shenzhen JingYu Network Technology Co., Ltd.
  *     e-mail : nining377@gmail.com
  *     time   : 2019/09/09
  *     desc   : 说明

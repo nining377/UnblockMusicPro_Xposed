@@ -27,7 +27,6 @@ import java.io.File;
 /**
  * <pre>
  *     author : RainCat
- *     org    : Shenzhen JingYu Network Technology Co., Ltd.
  *     e-mail : nining377@gmail.com
  *     time   : 2019/09/08
  *     desc   : 说明

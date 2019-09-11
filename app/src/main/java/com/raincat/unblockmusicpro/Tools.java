@@ -23,6 +23,16 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+/**
+ * <pre>
+ *     author : RainCat
+ *     e-mail : nining377@gmail.com
+ *     time   : 2019/09/08
+ *     desc   : 说明
+ *     version: 1.0
+ * </pre>
+ */
+
 public class Tools {
     final static String HOOK_NAME = "com.netease.cloudmusic";
 

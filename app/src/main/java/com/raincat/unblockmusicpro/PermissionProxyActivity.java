@@ -20,10 +20,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 权限代理，坑爹的安卓6.0
- *
- * @author 躲雨的猫
+ * <pre>
+ *     author : RainCat
+ *     e-mail : nining377@gmail.com
+ *     time   : 2019/09/08
+ *     desc   : 说明
+ *     version: 1.0
+ * </pre>
  */
+
 public class PermissionProxyActivity extends AppCompatActivity {
     private final static int REQUEST_CODE_ASK_PERMISSIONS = 123;
     private static AlertDialog dialog;

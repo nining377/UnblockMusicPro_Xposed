@@ -2,7 +2,6 @@ package com.raincat.unblockmusicpro;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.stericson.RootShell.execution.Command;
@@ -12,10 +11,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,10 +32,9 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
 /**
  * <pre>
  *     author : RainCat
- *     org    : Shenzhen JingYu Network Technology Co., Ltd.
  *     e-mail : nining377@gmail.com
  *     time   : 2019/09/07
- *     desc   : 说明
+ *     desc   : Hook
  *     version: 1.0
  * </pre>
  */
@@ -78,8 +74,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             final String processName = Tools.getCurrentProcessName(context);
                             //主进程脚本注入
                             if (processName.equals(Tools.HOOK_NAME)) {
-                                boolean check = initData(context);
-                                if (check) {
+                                if (initData(context)) {
                                     Command start;
                                     if (!Setting.getLog())
                                         start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + " -p 23338");
@@ -92,8 +87,13 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         };
                                     Tools.shell(start);
                                     Toast.makeText(context, "成功运行，当前优先选择" + Setting.getOriginString() + "音源", Toast.LENGTH_LONG).show();
-                                } else
-                                    Toast.makeText(context, "文件完整性检查失败，请运行UnblockMusic Pro并同意存储卡访问权限!", Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(context, "文件完整性校验失败，请打开UnblockMusic Pro并同意存储卡访问权限!", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                            } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
+                                if (!initData(context))
+                                    return;
                             }
 
                             //强制HTTP走本地代理
@@ -166,15 +166,25 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private boolean initData(Context context) {
         codePath = context.getFilesDir().getAbsolutePath();
         //比对版本
-        String version = Tools.loadFileFromSD(codePath + File.separator + "package.json");
+        String SDCartVersion = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
+        String codeVersion = Tools.loadFileFromSD(codePath + File.separator + "package.json");
         String localVersion = "";
         try {
-            if (version.length() != 0) {
-                JSONObject jsonObject = new JSONObject(version);
+            //对比SD卡与安装包的脚本版本，不对则返回错误
+            if (SDCartVersion.length() != 0) {
+                JSONObject jsonObject = new JSONObject(SDCartVersion);
                 localVersion = jsonObject.getString("version");
             }
             if (!localVersion.equals(Tools.nowVersion)) {
-                //复制核心文件文件到/data/data/*/code
+                return false;
+            }
+
+            //对比SD卡与网易云内部脚本版本，不对则拷贝SD卡脚本文件到网易云内部
+            if (codeVersion.length() != 0) {
+                JSONObject jsonObject = new JSONObject(codeVersion);
+                localVersion = jsonObject.getString("version");
+            }
+            if (!localVersion.equals(Tools.nowVersion)) {
                 Tools.copyFilesFromSD(Tools.SDCardPath, codePath);
             }
             Command command = new Command(0, "cd " + codePath, "chmod 700 *");
@@ -183,8 +193,8 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             e.printStackTrace();
         }
 
-        version = Tools.loadFileFromSD(codePath + File.separator + "package.json");
-        return version.length() != 0;
+        codeVersion = Tools.loadFileFromSD(codePath + File.separator + "package.json");
+        return codeVersion.length() != 0;
     }
 
     @Override
