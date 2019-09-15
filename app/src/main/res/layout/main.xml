@@ -242,6 +242,7 @@
             android:textStyle="bold" />
 
         <LinearLayout
+            android:id="@+id/linear_version"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?android:attr/selectableItemBackground"
@@ -267,6 +268,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/linear_script"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?android:attr/selectableItemBackground"

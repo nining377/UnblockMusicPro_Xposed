@@ -21,6 +21,7 @@
 #-renamesourcefileattribute SourceFile
 
 -keep public class com.raincat.unblockmusicpro.HTTPHook
+-keep public class android.app.**
 -keepclassmembernames class com.raincat.unblockmusicpro.MainActivity {
     boolean isModuleActive();
 }
@@ -31,3 +32,4 @@
 -dontwarn javax.lang.model.element.Modifier
 -dontwarn afu.org.checkerframework.**
 -dontwarn org.checkerframework.**
+-dontwarn android.app.**

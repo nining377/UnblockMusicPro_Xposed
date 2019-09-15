@@ -1,9 +1,12 @@
 package com.raincat.unblockmusicpro;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -15,11 +18,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.raincat.netutils.FILE_DOWNLOAD;
+import com.raincat.netutils.NetCallBack;
 import com.stericson.RootShell.execution.Command;
 
 import org.json.JSONException;
@@ -46,6 +52,7 @@ public class MainActivity extends PermissionProxyActivity {
     private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
     private ImageView iv_question;
     private RadioGroup rg_origin;
+    private LinearLayout linear_version, linear_script;
 
     private int originIndex = 0;
     private SharedPreferences share;
@@ -87,13 +94,14 @@ public class MainActivity extends PermissionProxyActivity {
     private void initData() {
         //比对版本
         String version = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
-        String localVersion = "";
+        int localVersion = 0;
         try {
             if (version.length() != 0) {
                 JSONObject jsonObject = new JSONObject(version);
-                localVersion = jsonObject.getString("version");
+                localVersion = Integer.parseInt(jsonObject.getString("version").replace(".", "00"));
             }
-            if (!localVersion.equals(Tools.nowVersion)) {
+            int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00"));
+            if (nowVersion > localVersion) {
                 //复制核心文件文件到SD卡
                 Tools.copyFilesAssets(context, "UnblockNeteaseMusic-" + Tools.nowVersion, Tools.SDCardPath);
                 Tools.copyFilesAssets(context, "shell", Tools.SDCardPath);
@@ -107,7 +115,7 @@ public class MainActivity extends PermissionProxyActivity {
             e.printStackTrace();
         }
 
-        tv_script.setText(localVersion);
+        tv_script.setText(Tools.nowVersion);
         int app_version = share.getInt("app_version", 0);
         if (app_version < BuildConfig.VERSION_CODE) {
             String update = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "update.txt");
@@ -136,6 +144,8 @@ public class MainActivity extends PermissionProxyActivity {
 
         iv_question = (ImageView) findViewById(R.id.iv_question);
         rg_origin = (RadioGroup) findViewById(R.id.rg_origin);
+        linear_version = (LinearLayout) findViewById(R.id.linear_version);
+        linear_script = (LinearLayout) findViewById(R.id.linear_script);
 
         tv_version.setText(BuildConfig.VERSION_NAME);
         tv_perfect[0].setText("Google：4.3.1");
@@ -237,6 +247,58 @@ public class MainActivity extends PermissionProxyActivity {
                 showMessageDialog(getString(R.string.menu_faq), FAQ, false);
             }
         });
+
+        linear_version.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Update.getAppVersion(context, new NetCallBack() {
+                    @Override
+                    public void finish(JSONObject jsonObject) throws JSONException {
+                        Update update = Update.getUpdate(context, jsonObject);
+                        if (!update.version.equals(BuildConfig.VERSION_NAME)) {
+                            showUpdateDialog("更新APP - " + update.version,"更新后请重启手机！", update);
+                        } else
+                            Toast.makeText(context, "APP已是最新版本！", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void error(int i, String s) {
+                        ErrorCode.showError(context, i);
+                    }
+
+                    @Override
+                    public void init() {
+
+                    }
+                });
+            }
+        });
+
+        linear_script.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Update.getScriptVersion(context, new NetCallBack() {
+                    @Override
+                    public void finish(JSONObject jsonObject) throws JSONException {
+                        Update update = Update.getUpdate(context, jsonObject);
+                        if (!update.version.equals(Tools.nowVersion)) {
+                            showUpdateDialog("更新脚本 - " + update.version,"下载不了多试几次，相信自己是最胖的！", update);
+                        } else
+                            Toast.makeText(context, "脚本已是最新版本！", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void error(int i, String s) {
+                        ErrorCode.showError(context, i);
+                    }
+
+                    @Override
+                    public void init() {
+
+                    }
+                });
+            }
+        });
     }
 
     private void checkState() {
@@ -288,6 +350,60 @@ public class MainActivity extends PermissionProxyActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         if (finish)
                             finish();
+                    }
+                })
+                .show();
+    }
+
+    private void showUpdateDialog(final String title, final String extra, final Update update) {
+        String log = update.log;
+        if (extra != null && extra.length() != 0)
+            log = log + "\n\n" + extra;
+        new AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setTitle(title)
+                .setMessage(log)
+                .setNegativeButton("取消", null)
+                .setNeutralButton("无法下载，访问蓝奏云", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData clipData = ClipData.newPlainText(null, "23fj");
+                        Toast.makeText(context, "密码已复制到剪切板", Toast.LENGTH_SHORT).show();
+                        clipboard.setPrimaryClip(clipData);
+                        Uri uri = Uri.parse("https://www.lanzous.com/b957345");
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        startActivity(intent);
+                    }
+                })
+                .setPositiveButton("更新", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String url = update.downloadUrl;
+                        if (url.length() == 0)
+                            url = update.zipUrl;
+                        new FILE_DOWNLOAD(context, url, R.mipmap.ic_launcher, true, true, new NetCallBack() {
+                            @Override
+                            public void finish(JSONObject jsonObject) throws JSONException {
+                                if (update.downloadUrl.length() == 0) {
+                                    String path = jsonObject.getString("path");
+                                    if (Tools.unzipFile(path, Tools.SDCardPath))
+                                        Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
+                                    else
+                                        Toast.makeText(context, "操作失败", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void error(int i, String s) {
+                                ErrorCode.showError(context, i);
+                            }
+
+                            @Override
+                            public void init() {
+
+                            }
+                        });
                     }
                 })
                 .show();

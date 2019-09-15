@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * <pre>
@@ -44,7 +46,7 @@ public class Tools {
     final static int originString[] = new int[]{R.string.kuwo, R.string.migu, R.string.kugou, R.string.qq};
     final static String State = "[ \"`pgrep node`\" != \"\" ] && echo YES";
     final static String Stop = "killall -9 node >/dev/null 2>&1";
-    final static String nowVersion = "0.19.1";
+    final static String nowVersion = "0.19.2";
     final static String message = "酷我：音质高，部分可下载无损\n" +
             "咪咕：酷我没有的歌用咪咕试试\n" +
             "酷狗：同上\n" +
@@ -174,6 +176,52 @@ public class Tools {
         }
         return stringBuilder.toString();
     }
+
+    static boolean unzipFile(String zipPath, String outputDirectory) {
+        try {
+            // 创建解压目标目录
+            File file = new File(outputDirectory);
+            // 如果目标目录不存在，则创建
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            // 打开压缩文件
+            InputStream inputStream = new FileInputStream(zipPath);
+            ;
+            ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+
+            // 读取一个进入点
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+            // 使用1Mbuffer
+            byte[] buffer = new byte[1024 * 1024];
+            // 解压时字节计数
+            int count = 0;
+            // 如果进入点为空说明已经遍历完所有压缩包中文件和目录
+            while (zipEntry != null) {
+                if (!zipEntry.isDirectory()) {  //如果是一个文件
+                    // 如果是文件
+                    String fileName = zipEntry.getName();
+                    fileName = fileName.substring(fileName.lastIndexOf("/") + 1);  //截取文件的名字 去掉原文件夹名字
+                    file = new File(outputDirectory + File.separator + fileName);  //放到新的解压的文件路径
+
+                    file.createNewFile();
+                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    while ((count = zipInputStream.read(buffer)) > 0) {
+                        fileOutputStream.write(buffer, 0, count);
+                    }
+                    fileOutputStream.close();
+
+                }
+                zipEntry = zipInputStream.getNextEntry();
+            }
+            zipInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
 
     /**
      * 判断是否为64bit手机

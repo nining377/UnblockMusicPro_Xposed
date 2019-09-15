@@ -16,6 +16,8 @@ import java.net.Proxy;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
@@ -98,85 +100,99 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                 }
                             }
 
-                            //强制HTTP走本地代理
-                            if (versionCode == 110) {
-                                hookAllConstructors(findClass("okhttp3.a", context.getClassLoader()), new XC_MethodHook() {
-                                    @Override
-                                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                        if (param.args.length >= 9) {
-                                            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
-                                            param.args[8] = proxy;
-                                        }
-                                    }
-                                });
-                            } else if (versionCode >= 138) {
+                            if (processName.equals(Tools.HOOK_NAME) || processName.equals(Tools.HOOK_NAME + ":play")) {
+                                final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
                                 //强制HTTP走本地代理
-                                hookAllMethods(findClass("okhttp3.OkHttpClient", context.getClassLoader()), "newBuilder", new XC_MethodHook() {
-                                    @Override
-                                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                                        Object okHttpClientBuilder = param.getResult();
-                                        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
-                                        Field okHttpClientBuilderProxy = okHttpClientBuilder.getClass().getDeclaredField("proxy");
-                                        boolean okHttpClientBuilderProxyFlag = okHttpClientBuilderProxy.isAccessible();
-                                        okHttpClientBuilderProxy.setAccessible(true);
-                                        okHttpClientBuilderProxy.set(okHttpClientBuilder, proxy);
-                                        okHttpClientBuilderProxy.setAccessible(okHttpClientBuilderProxyFlag);
-                                        param.setResult(okHttpClientBuilder);
-                                    }
-                                });
-//
-                                //强制HTTP走本地代理
-                                hookAllConstructors(findClass("okhttp3.OkHttpClient", context.getClassLoader()), new XC_MethodHook() {
-                                    @Override
-                                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                        if (param.args.length == 1) {
-                                            Object okHttpClientBuilder = param.args[0];
-                                            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
-                                            Field okHttpClientBuilderProxy = okHttpClientBuilder.getClass().getDeclaredField("proxy");
-                                            boolean okHttpClientBuilderProxyFlag = okHttpClientBuilderProxy.isAccessible();
-                                            okHttpClientBuilderProxy.setAccessible(true);
-                                            okHttpClientBuilderProxy.set(okHttpClientBuilder, proxy);
-                                            okHttpClientBuilderProxy.setAccessible(okHttpClientBuilderProxyFlag);
-                                            param.args[0] = okHttpClientBuilder;
-                                        }
-                                    }
-                                });
-
-                                //强制返回正确MD5
-                                CloudMusicPackage.init(context);
-                                hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
-                                    @Override
-                                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                        Object file = param.args[0];
-                                        if (file instanceof File) {
-                                            String path = param.args[0].toString();
-                                            Matcher matcher = REX_MD5.matcher(path);
-                                            if (matcher.find()) {
-                                                param.setResult(matcher.group());
-                                            }
-                                        }
-                                    }
-                                });
-
-                                //去广告
-                                if (Setting.getAd()) {
-                                    hookAllMethods(findClass("okhttp3.OkHttpClient", context.getClassLoader()), "newCall", new XC_MethodHook() {
+                                if (versionCode == 110) {
+                                    hookAllConstructors(findClass("okhttp3.a", context.getClassLoader()), new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            if (param.args.length == 1) {
-                                                Object request = param.args[0];
-                                                Field httpUrl = request.getClass().getDeclaredField("url");
-                                                httpUrl.setAccessible(true);
-                                                Object urlObj = httpUrl.get(request);
-                                                if (urlObj.toString().contains("eapi/ad")) {
-                                                    Field url = urlObj.getClass().getDeclaredField("url");
-                                                    url.setAccessible(true);
-                                                    url.set(urlObj, "https://33.123.321.14/");
-                                                    param.args[0] = request;
+                                            if (param.args.length >= 9) {
+                                                param.args[8] = proxy;
+                                            }
+                                        }
+                                    });
+                                } else if (versionCode >= 138) {
+//                                //强制HTTP走本地代理
+//                                hookAllConstructors(findClass("okhttp3.OkHttpClient", context.getClassLoader()), new XC_MethodHook() {
+//                                    @Override
+//                                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                                        if (param.args.length == 1) {
+//                                            Object okHttpClientBuilder = param.args[0];
+//                                            Field proxyField = okHttpClientBuilder.getClass().getDeclaredField("proxy");
+//                                            boolean proxyFlag = proxyField.isAccessible();
+//                                            proxyField.setAccessible(true);
+//                                            proxyField.set(okHttpClientBuilder, proxy);
+//                                            proxyField.setAccessible(proxyFlag);
+//                                            param.args[0] = okHttpClientBuilder;
+//                                        }
+//                                    }
+//                                });
+
+                                    //强制返回正确MD5
+                                    CloudMusicPackage.init(context);
+                                    hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                            Object file = param.args[0];
+                                            if (file instanceof File) {
+                                                String path = param.args[0].toString();
+                                                Matcher matcher = REX_MD5.matcher(path);
+                                                if (matcher.find()) {
+                                                    param.setResult(matcher.group());
                                                 }
                                             }
                                         }
                                     });
+
+
+                                    hookAllMethods(findClass("okhttp3.RealCall", context.getClassLoader()), "newRealCall", new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                            if (param.args.length == 3) {
+                                                Object client = param.args[0];
+                                                Object request = param.args[1];
+                                                Field httpUrl = request.getClass().getDeclaredField("url");
+                                                httpUrl.setAccessible(true);
+                                                Object urlObj = httpUrl.get(request);
+
+                                                Field proxyField = client.getClass().getDeclaredField("proxy");
+                                                boolean proxyFlag = proxyField.isAccessible();
+                                                proxyField.setAccessible(true);
+                                                //解决登录、个人中心页以及部分网易云歌曲播放异常等问题
+                                                if (urlObj.toString().contains("eapi/login") || urlObj.toString().contains("eapi/batch") || urlObj.toString().contains("eapi/college")
+                                                        || urlObj.toString().contains("eapi/nmusician") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic")
+                                                        || urlObj.toString().contains("jdyyaac")) {
+                                                    proxyField.set(client, null);
+                                                } else {
+                                                    proxyField.set(client, proxy);
+                                                }
+                                                proxyField.setAccessible(proxyFlag);
+                                                param.args[0] = client;
+                                            }
+                                        }
+                                    });
+
+                                    //去广告
+                                    if (Setting.getAd()) {
+                                        hookAllMethods(findClass("okhttp3.OkHttpClient", context.getClassLoader()), "newCall", new XC_MethodHook() {
+                                            @Override
+                                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                                if (param.args.length == 1) {
+                                                    Object request = param.args[0];
+                                                    Field httpUrl = request.getClass().getDeclaredField("url");
+                                                    httpUrl.setAccessible(true);
+                                                    Object urlObj = httpUrl.get(request);
+                                                    if (urlObj.toString().contains("eapi/ad")) {
+                                                        Field url = urlObj.getClass().getDeclaredField("url");
+                                                        url.setAccessible(true);
+                                                        url.set(urlObj, "https://33.123.321.14/");
+                                                        param.args[0] = request;
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -188,26 +204,27 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private boolean initData(Context context) {
         codePath = context.getFilesDir().getAbsolutePath();
         //比对版本
-        String SDCartVersion = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
-        String codeVersion = Tools.loadFileFromSD(codePath + File.separator + "package.json");
-        String localVersion = "";
+        String sdCartVersionString = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
+        String codeVersionString = Tools.loadFileFromSD(codePath + File.separator + "package.json");
+        int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00"));
+        int sdCartVersion = 0;
+        int codeVersion = 0;
         try {
             //对比SD卡与安装包的脚本版本，不对则返回错误
-            if (SDCartVersion.length() != 0) {
-                JSONObject jsonObject = new JSONObject(SDCartVersion);
-                localVersion = jsonObject.getString("version");
+            if (sdCartVersionString.length() != 0) {
+                JSONObject jsonObject = new JSONObject(sdCartVersionString);
+                sdCartVersion = Integer.parseInt(jsonObject.getString("version").replace(".", "00"));
             }
-            if (!localVersion.equals(Tools.nowVersion)) {
+            if (sdCartVersion < nowVersion) {
                 return false;
             }
 
             //对比SD卡与网易云内部脚本版本，不对则拷贝SD卡脚本文件到网易云内部
-            localVersion = "";
-            if (codeVersion.length() != 0) {
-                JSONObject jsonObject = new JSONObject(codeVersion);
-                localVersion = jsonObject.getString("version");
+            if (codeVersionString.length() != 0) {
+                JSONObject jsonObject = new JSONObject(codeVersionString);
+                codeVersion = Integer.parseInt(jsonObject.getString("version").replace(".", "00"));
             }
-            if (!localVersion.equals(Tools.nowVersion)) {
+            if (codeVersion < sdCartVersion) {
                 Tools.copyFilesFromSD(Tools.SDCardPath, codePath);
             }
             Command command = new Command(0, "cd " + codePath, "chmod 700 *");
@@ -217,8 +234,8 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             return false;
         }
 
-        codeVersion = Tools.loadFileFromSD(codePath + File.separator + "package.json");
-        return codeVersion.length() != 0;
+        codeVersionString = Tools.loadFileFromSD(codePath + File.separator + "package.json");
+        return codeVersionString.length() != 0;
     }
 
     @Override
