@@ -30,11 +30,11 @@ public class Update extends BaseObject {
     private final static String scriptUrl = "https://api.github.com/repos/nondanee/UnblockNeteaseMusic/releases/latest";
 
     public static void getAppVersion(Context context, NetCallBack back) {
-        new HTTPS_GET(context, appUrl, null, true, false, back);
+        new HTTPS_GET(context, appUrl, null, false, false, back);
     }
 
     public static void getScriptVersion(Context context, NetCallBack back) {
-        new HTTPS_GET(context, scriptUrl, null, true, false, back);
+        new HTTPS_GET(context, scriptUrl, null, false, false, back);
     }
 
     public static Update getUpdate(Context context, JSONObject jsonObject) throws JSONException {

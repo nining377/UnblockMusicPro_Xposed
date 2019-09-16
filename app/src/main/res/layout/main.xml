@@ -2,6 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     android:orientation="vertical">
 
     <LinearLayout
@@ -161,7 +162,7 @@
                 android:layout_width="17dp"
                 android:layout_height="17dp"
                 android:layout_marginStart="5dp"
-                android:src="@mipmap/question" />
+                android:src="@mipmap/ic_question" />
         </LinearLayout>
 
         <RadioGroup
@@ -258,11 +259,19 @@
                 android:textColor="@color/colorText"
                 android:textSize="16sp" />
 
+            <ImageView
+                android:id="@+id/iv_version"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="5dp"
+                android:src="@mipmap/ic_new"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/tv_version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="15dp"
+                android:paddingRight="15dp"
                 android:textColor="@color/colorButton_text"
                 android:textSize="14sp" />
         </LinearLayout>
@@ -284,11 +293,19 @@
                 android:textColor="@color/colorText"
                 android:textSize="16sp" />
 
+            <ImageView
+                android:id="@+id/iv_script"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="5dp"
+                android:src="@mipmap/ic_new"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/tv_script"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="15dp"
+                android:paddingRight="15dp"
                 android:textColor="@color/colorButton_text"
                 android:textSize="14sp" />
         </LinearLayout>

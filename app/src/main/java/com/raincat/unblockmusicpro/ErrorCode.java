@@ -7,9 +7,8 @@ import android.widget.Toast;
 /**
  * <pre>
  *     author : RainCat
- *     org    : Shenzhen JingYu Network Technology Co., Ltd.
  *     e-mail : nining377@gmail.com
- *     time   : 2018/09/20
+ *     time   : 2019/09/16
  *     desc   : 错误代码
  *     version: 1.0
  * </pre>

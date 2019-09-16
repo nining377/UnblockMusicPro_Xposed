@@ -50,12 +50,13 @@ public class MainActivity extends PermissionProxyActivity {
     private RelativeLayout rela_enable, rela_ad, rela_hide, rela_log;
     private CheckBox cb_enable, cb_ad, cb_hide, cb_log;
     private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
-    private ImageView iv_question;
+    private ImageView iv_question, iv_version, iv_script;
     private RadioGroup rg_origin;
     private LinearLayout linear_version, linear_script;
 
     private int originIndex = 0;
     private SharedPreferences share;
+    private Update versionUpdate, scriptUpdate;
 
     Handler handler = new Handler() {
         @Override
@@ -85,6 +86,7 @@ public class MainActivity extends PermissionProxyActivity {
             public void onResult(boolean get) {
                 if (get) {
                     initData();
+                    checkUpdate();
                 } else
                     finish();
             }
@@ -94,11 +96,13 @@ public class MainActivity extends PermissionProxyActivity {
     private void initData() {
         //比对版本
         String version = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
+        String localVersionString = "";
         int localVersion = 0;
         try {
             if (version.length() != 0) {
                 JSONObject jsonObject = new JSONObject(version);
-                localVersion = Integer.parseInt(jsonObject.getString("version").replace(".", "00"));
+                localVersionString = jsonObject.getString("version");
+                localVersion = Integer.parseInt(localVersionString.replace(".", "00"));
             }
             int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00"));
             if (nowVersion > localVersion) {
@@ -109,7 +113,8 @@ public class MainActivity extends PermissionProxyActivity {
                     Tools.copyFilesAssets(context, "node-64bit", Tools.SDCardPath);
                 else
                     Tools.copyFilesAssets(context, "node-32bit", Tools.SDCardPath);
-            }
+            } else
+                Tools.nowVersion = localVersionString;
             Tools.copyFilesAssets(context, "log", Tools.SDCardPath);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -143,6 +148,8 @@ public class MainActivity extends PermissionProxyActivity {
         tv_perfect[1] = (TextView) findViewById(R.id.tv_perfect2);
 
         iv_question = (ImageView) findViewById(R.id.iv_question);
+        iv_version = (ImageView) findViewById(R.id.iv_version);
+        iv_script = (ImageView) findViewById(R.id.iv_script);
         rg_origin = (RadioGroup) findViewById(R.id.rg_origin);
         linear_version = (LinearLayout) findViewById(R.id.linear_version);
         linear_script = (LinearLayout) findViewById(R.id.linear_script);
@@ -251,52 +258,64 @@ public class MainActivity extends PermissionProxyActivity {
         linear_version.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Update.getAppVersion(context, new NetCallBack() {
-                    @Override
-                    public void finish(JSONObject jsonObject) throws JSONException {
-                        Update update = Update.getUpdate(context, jsonObject);
-                        if (!update.version.equals(BuildConfig.VERSION_NAME)) {
-                            showUpdateDialog("更新APP - " + update.version,"更新后请重启手机！", update);
-                        } else
-                            Toast.makeText(context, "APP已是最新版本！", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void error(int i, String s) {
-                        ErrorCode.showError(context, i);
-                    }
-
-                    @Override
-                    public void init() {
-
-                    }
-                });
+                if (versionUpdate == null)
+                    return;
+                if (!versionUpdate.version.equals(BuildConfig.VERSION_NAME)) {
+                    showUpdateDialog("更新APP - " + versionUpdate.version, "注意：更新后请重启手机！", versionUpdate);
+                } else
+                    Toast.makeText(context, "APP已是最新版本！", Toast.LENGTH_SHORT).show();
             }
         });
 
         linear_script.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Update.getScriptVersion(context, new NetCallBack() {
-                    @Override
-                    public void finish(JSONObject jsonObject) throws JSONException {
-                        Update update = Update.getUpdate(context, jsonObject);
-                        if (!update.version.equals(Tools.nowVersion)) {
-                            showUpdateDialog("更新脚本 - " + update.version,"下载不了多试几次，相信自己是最胖的！", update);
-                        } else
-                            Toast.makeText(context, "脚本已是最新版本！", Toast.LENGTH_SHORT).show();
-                    }
+                if (scriptUpdate == null)
+                    return;
+                if (!scriptUpdate.version.equals(Tools.nowVersion)) {
+                    showUpdateDialog("更新脚本 - " + scriptUpdate.version, "注意：下载不了多试几次，相信自己是最胖的！", scriptUpdate);
+                } else
+                    Toast.makeText(context, "脚本已是最新版本！", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
-                    @Override
-                    public void error(int i, String s) {
-                        ErrorCode.showError(context, i);
-                    }
+    private void checkUpdate() {
+        Update.getAppVersion(context, new NetCallBack() {
+            @Override
+            public void finish(JSONObject jsonObject) throws JSONException {
+                versionUpdate = Update.getUpdate(context, jsonObject);
+                if (!versionUpdate.version.equals(BuildConfig.VERSION_NAME))
+                    iv_version.setVisibility(View.VISIBLE);
+            }
 
-                    @Override
-                    public void init() {
+            @Override
+            public void error(int i, String s) {
+                ErrorCode.showError(context, i);
+            }
 
-                    }
-                });
+            @Override
+            public void init() {
+
+            }
+        });
+
+        Update.getScriptVersion(context, new NetCallBack() {
+            @Override
+            public void finish(JSONObject jsonObject) throws JSONException {
+                scriptUpdate = Update.getUpdate(context, jsonObject);
+                if (!scriptUpdate.version.equals(Tools.nowVersion))
+                    iv_script.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void error(int i, String s) {
+                ErrorCode.showError(context, i);
+            }
+
+            @Override
+            public void init() {
+
             }
         });
     }
@@ -386,11 +405,13 @@ public class MainActivity extends PermissionProxyActivity {
                             @Override
                             public void finish(JSONObject jsonObject) throws JSONException {
                                 if (update.downloadUrl.length() == 0) {
+                                    iv_script.setVisibility(View.GONE);
                                     String path = jsonObject.getString("path");
                                     if (Tools.unzipFile(path, Tools.SDCardPath))
                                         Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
                                     else
                                         Toast.makeText(context, "操作失败", Toast.LENGTH_SHORT).show();
+                                    initData();
                                 }
                             }
 
