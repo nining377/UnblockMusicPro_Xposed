@@ -16,6 +16,8 @@ import java.net.Proxy;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -83,10 +85,13 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(context)) {
                                     Command start;
+                                    String port = " -p 23338";
+                                    if (Setting.getSSL())
+                                        port = port + ":23339";
                                     if (!Setting.getLog())
-                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + " -p 23338");
+                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port);
                                     else
-                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + " -p 23338") {
+                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
                                             @Override
                                             public void commandOutput(int id, String line) {
                                                 XposedBridge.log(line);
@@ -101,34 +106,21 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             }
 
                             if (processName.equals(Tools.HOOK_NAME) || processName.equals(Tools.HOOK_NAME + ":play")) {
+                                final SSLSocketFactory socketFactory = Tools.getSLLContext(codePath + File.separator + "ca.crt").getSocketFactory();
                                 final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
-                                //强制HTTP走本地代理
                                 if (versionCode == 110) {
+                                    //强制HTTP走本地代理
                                     hookAllConstructors(findClass("okhttp3.a", context.getClassLoader()), new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                             if (param.args.length >= 9) {
                                                 param.args[8] = proxy;
+                                                if (Setting.getSSL())
+                                                    param.args[4] = socketFactory;
                                             }
                                         }
                                     });
                                 } else if (versionCode >= 138) {
-//                                //强制HTTP走本地代理
-//                                hookAllConstructors(findClass("okhttp3.OkHttpClient", context.getClassLoader()), new XC_MethodHook() {
-//                                    @Override
-//                                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//                                        if (param.args.length == 1) {
-//                                            Object okHttpClientBuilder = param.args[0];
-//                                            Field proxyField = okHttpClientBuilder.getClass().getDeclaredField("proxy");
-//                                            boolean proxyFlag = proxyField.isAccessible();
-//                                            proxyField.setAccessible(true);
-//                                            proxyField.set(okHttpClientBuilder, proxy);
-//                                            proxyField.setAccessible(proxyFlag);
-//                                            param.args[0] = okHttpClientBuilder;
-//                                        }
-//                                    }
-//                                });
-
                                     //强制返回正确MD5
                                     CloudMusicPackage.init(context);
                                     hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
@@ -145,7 +137,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         }
                                     });
 
-
+                                    //解决有版权歌曲无法缓冲
                                     hookAllMethods(findClass("okhttp3.RealCall", context.getClassLoader()), "newRealCall", new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -159,10 +151,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                                 Field proxyField = client.getClass().getDeclaredField("proxy");
                                                 boolean proxyFlag = proxyField.isAccessible();
                                                 proxyField.setAccessible(true);
-                                                //解决登录、个人中心页以及部分网易云歌曲播放异常等问题
-                                                if (urlObj.toString().contains("eapi/login") || urlObj.toString().contains("eapi/batch") || urlObj.toString().contains("eapi/college")
-                                                        || urlObj.toString().contains("eapi/nmusician") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic")
-                                                        || urlObj.toString().contains("jdyyaac")) {
+                                                if (urlObj.toString().contains("jdyyaac")) {
                                                     proxyField.set(client, null);
                                                 } else {
                                                     proxyField.set(client, proxy);
@@ -189,6 +178,29 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                                         url.set(urlObj, "https://33.123.321.14/");
                                                         param.args[0] = request;
                                                     }
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                    //强制HTTP走本地代理
+                                    if (Setting.getSSL()) {
+                                        hookAllConstructors(findClass("okhttp3.OkHttpClient", context.getClassLoader()), new XC_MethodHook() {
+                                            @Override
+                                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                                if (param.args.length == 1) {
+                                                    Object okHttpClientBuilder = param.args[0];
+//                                                  Field proxyField = okHttpClientBuilder.getClass().getDeclaredField("proxy");
+//                                                  boolean proxyFlag = proxyField.isAccessible();
+//                                                  proxyField.setAccessible(true);
+//                                                  proxyField.set(okHttpClientBuilder, proxy);
+//                                                  proxyField.setAccessible(proxyFlag);
+//                                                  param.args[0] = okHttpClientBuilder;
+
+                                                    Field sslSocketFactoryField = okHttpClientBuilder.getClass().getDeclaredField("sslSocketFactory");
+                                                    sslSocketFactoryField.setAccessible(true);
+                                                    sslSocketFactoryField.set(okHttpClientBuilder, socketFactory);
+                                                    param.args[0] = okHttpClientBuilder;
                                                 }
                                             }
                                         });

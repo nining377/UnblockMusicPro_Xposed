@@ -52,6 +52,10 @@ class Setting {
         return getModuleSharedPreferences().getBoolean("ad", true);
     }
 
+    static boolean getSSL() {
+        return getModuleSharedPreferences().getBoolean("ssl", true);
+    }
+
     static boolean getLog() {
         return getModuleSharedPreferences().getBoolean("log", false);
     }
