@@ -24,22 +24,23 @@
             android:id="@+id/rela_enable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground">
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="15dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:padding="15dp"
                 android:text="@string/enable"
                 android:textColor="@color/colorText"
                 android:textSize="16sp" />
 
             <CheckBox
                 android:id="@+id/cb_enable"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:checked="true"
                 android:clickable="false" />
@@ -49,22 +50,37 @@
             android:id="@+id/rela_ad"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground">
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="15dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:padding="15dp"
-                android:text="@string/ad"
-                android:textColor="@color/colorText"
-                android:textSize="16sp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ad"
+                    android:textColor="@color/colorText"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="50dp"
+                    android:text="过滤URL中含eapi/ad的所有链接，如有问题请取消打勾"
+                    android:textColor="@color/colorButton_text"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <CheckBox
                 android:id="@+id/cb_ad"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:checked="true"
                 android:clickable="false" />
@@ -74,22 +90,37 @@
             android:id="@+id/rela_ssl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground">
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="15dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:padding="15dp"
-                android:text="@string/ssl"
-                android:textColor="@color/colorText"
-                android:textSize="16sp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ssl"
+                    android:textColor="@color/colorText"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="50dp"
+                    android:text="解决无法登陆与查看个人主页的问题，但会导致歌单封面与用户头像无法显示，慎用"
+                    android:textColor="@color/colorButton_text"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <CheckBox
                 android:id="@+id/cb_ssl"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:checked="true"
                 android:clickable="false" />
@@ -99,22 +130,23 @@
             android:id="@+id/rela_hide"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground">
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="15dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:padding="15dp"
                 android:text="@string/hide"
                 android:textColor="@color/colorText"
                 android:textSize="16sp" />
 
             <CheckBox
                 android:id="@+id/cb_hide"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:clickable="false" />
         </RelativeLayout>
@@ -123,22 +155,37 @@
             android:id="@+id/rela_log"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground">
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="15dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:padding="15dp"
-                android:text="@string/log"
-                android:textColor="@color/colorText"
-                android:textSize="16sp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/log"
+                    android:textColor="@color/colorText"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="50dp"
+                    android:text="用于快速定位问题，仅在UnblockMusic Pro无法正常工作的时候打开"
+                    android:textColor="@color/colorButton_text"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <CheckBox
                 android:id="@+id/cb_log"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:clickable="false" />
         </RelativeLayout>
@@ -187,6 +234,7 @@
                 android:layout_width="17dp"
                 android:layout_height="17dp"
                 android:layout_marginStart="5dp"
+                android:layout_marginLeft="5dp"
                 android:src="@mipmap/ic_question" />
         </LinearLayout>
 

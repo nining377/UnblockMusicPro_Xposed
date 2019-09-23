@@ -6,10 +6,10 @@ android {
 
     defaultConfig {
         applicationId "com.raincat.unblockmusicpro"
-        minSdkVersion 21
+        minSdkVersion 14
         targetSdkVersion 23
-        versionCode 252
-        versionName "2.5.2"
+        versionCode 253
+        versionName "2.5.3"
     }
     buildTypes {
         release {

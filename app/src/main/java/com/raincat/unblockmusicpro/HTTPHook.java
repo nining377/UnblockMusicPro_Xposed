@@ -172,7 +172,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                                     Field httpUrl = request.getClass().getDeclaredField("url");
                                                     httpUrl.setAccessible(true);
                                                     Object urlObj = httpUrl.get(request);
-                                                    if (urlObj.toString().contains("eapi/ad")) {
+                                                    if (urlObj.toString().contains("eapi/ad/")) {
                                                         Field url = urlObj.getClass().getDeclaredField("url");
                                                         url.setAccessible(true);
                                                         url.set(urlObj, "https://33.123.321.14/");
@@ -239,7 +239,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             if (codeVersion < sdCartVersion) {
                 Tools.copyFilesFromSD(Tools.SDCardPath, codePath);
             }
-            Command command = new Command(0, "cd " + codePath, "chmod 700 *");
+            Command command = new Command(0, "cd " + codePath, "chmod 770 *");
             Tools.shell(command);
         } catch (JSONException e) {
             e.printStackTrace();
