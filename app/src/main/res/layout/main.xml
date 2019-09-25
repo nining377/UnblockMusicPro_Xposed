@@ -127,6 +127,45 @@
         </RelativeLayout>
 
         <RelativeLayout
+            android:id="@+id/rela_high"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="15dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/high_quality"
+                    android:textColor="@color/colorText"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="50dp"
+                    android:text="把128kbps音质替换为酷我320kbps或者咪咕无损源，仅在音源优先级为酷我或咪咕时有效，几率出现歌曲匹配错误"
+                    android:textColor="@color/colorButton_text"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/cb_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:clickable="false" />
+        </RelativeLayout>
+
+        <RelativeLayout
             android:id="@+id/rela_hide"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -233,8 +272,8 @@
                 android:id="@+id/iv_question"
                 android:layout_width="17dp"
                 android:layout_height="17dp"
-                android:layout_marginStart="5dp"
                 android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
                 android:src="@mipmap/ic_question" />
         </LinearLayout>
 

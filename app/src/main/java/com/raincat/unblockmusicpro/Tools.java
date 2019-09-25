@@ -12,13 +12,16 @@ import com.stericson.RootShell.execution.Command;
 import com.stericson.RootTools.RootTools;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -46,7 +49,7 @@ import javax.net.ssl.TrustManagerFactory;
  */
 
 public class Tools {
-    static String nowVersion = "0.19.2";
+    static String nowVersion = "0.19.3";
 
     final static String HOOK_NAME = "com.netease.cloudmusic";
     final static String SDCardPath = Environment.getExternalStorageDirectory() + "/UnblockMusicPro";
@@ -166,7 +169,7 @@ public class Tools {
      * @param path
      * @return
      */
-    static String loadFileFromSD(String path) {
+    static String readFileFromSD(String path) {
         StringBuilder stringBuilder = new StringBuilder();
         File file = new File(path);
         if (!file.isDirectory()) {
@@ -185,6 +188,34 @@ public class Tools {
             }
         }
         return stringBuilder.toString();
+    }
+
+    /**
+     * 写入内容到一个文件
+     *
+     * @param path
+     * @param content
+     * @return
+     */
+    static boolean writeFileFromSD(String path, String content) {
+        BufferedWriter out = null;
+        try {
+            File file = new File(path);
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false),"utf-8"));
+            out.write(content);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
     }
 
     static boolean unzipFile(String zipFileString, String outPathString) {

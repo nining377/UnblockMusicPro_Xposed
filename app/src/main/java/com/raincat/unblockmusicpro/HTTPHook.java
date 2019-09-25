@@ -16,8 +16,6 @@ import java.net.Proxy;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -151,7 +149,10 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                                 Field proxyField = client.getClass().getDeclaredField("proxy");
                                                 boolean proxyFlag = proxyField.isAccessible();
                                                 proxyField.setAccessible(true);
-                                                if (urlObj.toString().contains("jdyyaac")) {
+//                                                if (urlObj.toString().contains("eapi/login") || urlObj.toString().contains("eapi/batch") || urlObj.toString().contains("eapi/college")
+//                                                        || urlObj.toString().contains("eapi/nmusician") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic")
+//                                                        || urlObj.toString().contains("jdyyaac")) {
+                                                if (urlObj.toString().contains("jdyyaac") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic")) {
                                                     proxyField.set(client, null);
                                                 } else {
                                                     proxyField.set(client, proxy);
@@ -216,16 +217,16 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private boolean initData(Context context) {
         codePath = context.getFilesDir().getAbsolutePath();
         //比对版本
-        String sdCartVersionString = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
-        String codeVersionString = Tools.loadFileFromSD(codePath + File.separator + "package.json");
-        int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00"));
+        String sdCartVersionString = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "package.json");
+        String codeVersionString = Tools.readFileFromSD(codePath + File.separator + "package.json");
+        int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00").replace("-high", ""));
         int sdCartVersion = 0;
-        int codeVersion = 0;
         try {
             //对比SD卡与安装包的脚本版本，不对则返回错误
             if (sdCartVersionString.length() != 0) {
                 JSONObject jsonObject = new JSONObject(sdCartVersionString);
-                sdCartVersion = Integer.parseInt(jsonObject.getString("version").replace(".", "00"));
+                sdCartVersionString = jsonObject.getString("version");
+                sdCartVersion = Integer.parseInt(sdCartVersionString.replace(".", "00").replace("-high", ""));
             }
             if (sdCartVersion < nowVersion) {
                 return false;
@@ -234,19 +235,19 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             //对比SD卡与网易云内部脚本版本，不对则拷贝SD卡脚本文件到网易云内部
             if (codeVersionString.length() != 0) {
                 JSONObject jsonObject = new JSONObject(codeVersionString);
-                codeVersion = Integer.parseInt(jsonObject.getString("version").replace(".", "00"));
+                codeVersionString = jsonObject.getString("version");
             }
-            if (codeVersion < sdCartVersion) {
+            if (!codeVersionString.equals(sdCartVersionString)) {
                 Tools.copyFilesFromSD(Tools.SDCardPath, codePath);
+                Command command = new Command(0, "cd " + codePath, "chmod 770 *");
+                Tools.shell(command);
             }
-            Command command = new Command(0, "cd " + codePath, "chmod 770 *");
-            Tools.shell(command);
         } catch (JSONException e) {
             e.printStackTrace();
             return false;
         }
 
-        codeVersionString = Tools.loadFileFromSD(codePath + File.separator + "package.json");
+        codeVersionString = Tools.readFileFromSD(codePath + File.separator + "package.json");
         return codeVersionString.length() != 0;
     }
 

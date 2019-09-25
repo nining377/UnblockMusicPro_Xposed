@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
@@ -26,14 +25,11 @@ import android.widget.Toast;
 
 import com.raincat.netutils.FILE_DOWNLOAD;
 import com.raincat.netutils.NetCallBack;
-import com.stericson.RootShell.execution.Command;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-
-import de.robv.android.xposed.XposedBridge;
 
 /**
  * <pre>
@@ -47,8 +43,8 @@ import de.robv.android.xposed.XposedBridge;
 
 public class MainActivity extends PermissionProxyActivity {
     private Context context;
-    private RelativeLayout rela_enable, rela_ad,rela_ssl, rela_hide, rela_log;
-    private CheckBox cb_enable, cb_ad,cb_ssl, cb_hide, cb_log;
+    private RelativeLayout rela_enable, rela_ad, rela_high, rela_ssl, rela_hide, rela_log;
+    private CheckBox cb_enable, cb_ad, cb_high, cb_ssl, cb_hide, cb_log;
     private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
     private ImageView iv_question, iv_version, iv_script;
     private RadioGroup rg_origin;
@@ -95,16 +91,16 @@ public class MainActivity extends PermissionProxyActivity {
 
     private void initData() {
         //比对版本
-        String version = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "package.json");
+        String version = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "package.json");
         String localVersionString = "";
         int localVersion = 0;
         try {
             if (version.length() != 0) {
                 JSONObject jsonObject = new JSONObject(version);
                 localVersionString = jsonObject.getString("version");
-                localVersion = Integer.parseInt(localVersionString.replace(".", "00"));
+                localVersion = Integer.parseInt(localVersionString.replace(".", "00").replace("-high", ""));
             }
-            int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00"));
+            int nowVersion = Integer.parseInt(Tools.nowVersion.replace(".", "00").replace("-high", ""));
             if (nowVersion > localVersion) {
                 //复制核心文件文件到SD卡
                 Tools.copyFilesAssets(context, "UnblockNeteaseMusic-" + Tools.nowVersion, Tools.SDCardPath);
@@ -123,7 +119,7 @@ public class MainActivity extends PermissionProxyActivity {
         tv_script.setText(Tools.nowVersion);
         int app_version = share.getInt("app_version", 0);
         if (app_version < BuildConfig.VERSION_CODE) {
-            String update = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "update.txt");
+            String update = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "update.txt");
             showMessageDialog(getString(R.string.menu_update), update, false);
         }
         share.edit().putInt("app_version", BuildConfig.VERSION_CODE).apply();
@@ -132,11 +128,13 @@ public class MainActivity extends PermissionProxyActivity {
     private void initView() {
         rela_enable = (RelativeLayout) findViewById(R.id.rela_enable);
         rela_ad = (RelativeLayout) findViewById(R.id.rela_ad);
+        rela_high = (RelativeLayout) findViewById(R.id.rela_high);
         rela_ssl = (RelativeLayout) findViewById(R.id.rela_ssl);
         rela_hide = (RelativeLayout) findViewById(R.id.rela_hide);
         rela_log = (RelativeLayout) findViewById(R.id.rela_log);
         cb_enable = (CheckBox) findViewById(R.id.cb_enable);
         cb_ad = (CheckBox) findViewById(R.id.cb_ad);
+        cb_high = (CheckBox) findViewById(R.id.cb_high);
         cb_ssl = (CheckBox) findViewById(R.id.cb_ssl);
         cb_hide = (CheckBox) findViewById(R.id.cb_hide);
         cb_log = (CheckBox) findViewById(R.id.cb_log);
@@ -166,6 +164,7 @@ public class MainActivity extends PermissionProxyActivity {
         cb_enable.setChecked(share.getBoolean("enable", true));
         cb_ad.setChecked(share.getBoolean("ad", true));
         cb_ssl.setChecked(share.getBoolean("ssl", true));
+        cb_high.setChecked(share.getBoolean("high", false));
         cb_hide.setChecked(share.getBoolean("hide", false));
         cb_log.setChecked(share.getBoolean("log", false));
     }
@@ -224,6 +223,17 @@ public class MainActivity extends PermissionProxyActivity {
             }
         });
 
+        rela_high.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isChecked = !cb_high.isChecked();
+                changeQuality(isChecked);
+                cb_high.setChecked(isChecked);
+                share.edit().putBoolean("high", isChecked).apply();
+                Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         rela_hide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -255,7 +265,7 @@ public class MainActivity extends PermissionProxyActivity {
         tv_update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String update = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "update.txt");
+                String update = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "update.txt");
                 showMessageDialog(getString(R.string.menu_update), update, false);
             }
         });
@@ -263,7 +273,7 @@ public class MainActivity extends PermissionProxyActivity {
         tv_faq.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String FAQ = Tools.loadFileFromSD(Tools.SDCardPath + File.separator + "FAQ.txt");
+                String FAQ = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "FAQ.txt");
                 showMessageDialog(getString(R.string.menu_faq), FAQ, false);
             }
         });
@@ -285,7 +295,7 @@ public class MainActivity extends PermissionProxyActivity {
             public void onClick(View v) {
                 if (scriptUpdate == null)
                     return;
-                if (!scriptUpdate.version.equals(Tools.nowVersion)) {
+                if (!scriptUpdate.version.equals(Tools.nowVersion.replace("-high", ""))) {
                     showUpdateDialog("更新脚本 - " + scriptUpdate.version, "注意：下载不了多试几次，相信自己是最胖的！", scriptUpdate);
                 } else
                     Toast.makeText(context, "脚本已是最新版本！", Toast.LENGTH_SHORT).show();
@@ -317,7 +327,7 @@ public class MainActivity extends PermissionProxyActivity {
             @Override
             public void finish(JSONObject jsonObject) throws JSONException {
                 scriptUpdate = Update.getUpdate(context, jsonObject);
-                if (!scriptUpdate.version.equals(Tools.nowVersion))
+                if (!scriptUpdate.version.equals(Tools.nowVersion.replace("-high", "")))
                     iv_script.setVisibility(View.VISIBLE);
             }
 
@@ -346,6 +356,41 @@ public class MainActivity extends PermissionProxyActivity {
 
         if (method == null)
             showMessageDialog("引导", getString(R.string.Module_is_Not_Active), false);
+    }
+
+    /**
+     * 改变音质
+     *
+     * @param high
+     */
+    private void changeQuality(boolean high) {
+        String packageJson = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "package.json");
+//        String kuwo = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "kuwo.js");
+        String migu = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "migu.js");
+        String hook = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "hook.js");
+        String localVersionString = "";
+        try {
+            JSONObject jsonObject = new JSONObject(packageJson);
+            localVersionString = jsonObject.getString("version");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (high) {
+            packageJson = packageJson.replace(localVersionString, localVersionString + "-high");
+//            kuwo = kuwo.replace("&format=mp3&", "&format=aac|mp3&");
+            migu = migu.replace("/*'sqPlayInfo'*/", "'sqPlayInfo'");
+            hook = hook.replace("(item.code != 200 || item.freeTrialInfo)", "(item.code != 200 || item.freeTrialInfo ||item.br <= 128000)");
+        } else {
+            packageJson = packageJson.replace(localVersionString, localVersionString.replace("-high", ""));
+//            kuwo = kuwo.replace("&format=aac|mp3&", "&format=mp3&");
+            migu = migu.replace("'sqPlayInfo'", "/*'sqPlayInfo'*/");
+            hook = hook.replace("(item.code != 200 || item.freeTrialInfo ||item.br <= 128000)", "(item.code != 200 || item.freeTrialInfo)");
+        }
+        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "package.json", packageJson);
+//        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "kuwo.js", kuwo);
+        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "migu.js", migu);
+        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "hook.js", hook);
+        initData();
     }
 
     private boolean isExpModuleActive() {
@@ -424,7 +469,7 @@ public class MainActivity extends PermissionProxyActivity {
                                         Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
                                     else
                                         Toast.makeText(context, "操作失败", Toast.LENGTH_SHORT).show();
-                                    initData();
+                                    changeQuality(cb_high.isChecked());
                                 }
                             }
 
