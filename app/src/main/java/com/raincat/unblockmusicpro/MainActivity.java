@@ -378,12 +378,12 @@ public class MainActivity extends PermissionProxyActivity {
         if (high) {
             packageJson = packageJson.replace(localVersionString, localVersionString + "-high");
 //            kuwo = kuwo.replace("&format=mp3&", "&format=aac|mp3&");
-            migu = migu.replace("/*'sqPlayInfo'*/", "'sqPlayInfo'");
+            migu = migu.replace("/*'sqPlayInfo'*/,", "'sqPlayInfo',");
             hook = hook.replace("(item.code != 200 || item.freeTrialInfo)", "(item.code != 200 || item.freeTrialInfo ||item.br <= 128000)");
         } else {
             packageJson = packageJson.replace(localVersionString, localVersionString.replace("-high", ""));
 //            kuwo = kuwo.replace("&format=aac|mp3&", "&format=mp3&");
-            migu = migu.replace("'sqPlayInfo'", "/*'sqPlayInfo'*/");
+            migu = migu.replace("'sqPlayInfo',", "/*'sqPlayInfo'*/,");
             hook = hook.replace("(item.code != 200 || item.freeTrialInfo ||item.br <= 128000)", "(item.code != 200 || item.freeTrialInfo)");
         }
         Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "package.json", packageJson);

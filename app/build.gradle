@@ -8,8 +8,8 @@ android {
         applicationId "com.raincat.unblockmusicpro"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 260
-        versionName "2.6.0"
+        versionCode 261
+        versionName "2.6.1"
     }
     buildTypes {
         release {

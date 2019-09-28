@@ -3,8 +3,11 @@ package com.raincat.unblockmusicpro;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.annimon.stream.Stream;
 import com.stericson.RootShell.exceptions.RootDeniedException;
@@ -49,7 +52,7 @@ import javax.net.ssl.TrustManagerFactory;
  */
 
 public class Tools {
-    static String nowVersion = "0.19.3";
+    static String nowVersion = "0.19.4";
 
     final static String HOOK_NAME = "com.netease.cloudmusic";
     final static String SDCardPath = Environment.getExternalStorageDirectory() + "/UnblockMusicPro";
@@ -201,7 +204,7 @@ public class Tools {
         BufferedWriter out = null;
         try {
             File file = new File(path);
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false),"utf-8"));
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false), "utf-8"));
             out.write(content);
         } catch (Exception e) {
             e.printStackTrace();
@@ -305,16 +308,39 @@ public class Tools {
     }
 
     /**
+     * 弹窗
+     *
+     * @param context
+     * @param message
+     */
+    static void showToastOnLooper(final Context context, String message) {
+        try {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
      * ADB命令
      *
+     * @param context
      * @param command
      */
-    static void shell(Command command) {
+    static void shell(Context context, Command command) {
         try {
             RootTools.closeAllShells();
             RootTools.getShell(false).add(command);
         } catch (TimeoutException | RootDeniedException | IOException e) {
             e.printStackTrace();
+            showToastOnLooper(context, e.getMessage());
         }
     }
 

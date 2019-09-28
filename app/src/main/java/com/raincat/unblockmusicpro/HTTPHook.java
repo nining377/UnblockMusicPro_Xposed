@@ -1,7 +1,10 @@
 package com.raincat.unblockmusicpro;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import com.stericson.RootShell.execution.Command;
@@ -46,6 +49,9 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static int versionCode = 0;
     private static String codePath = "";
 
+    private static boolean firstToastShow = true;
+    private static boolean showLog = false;
+
     @Override
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) {
         if (lpparam.packageName.equals(BuildConfig.APPLICATION_ID)) {
@@ -59,46 +65,53 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                     "attachBaseContext", Context.class, new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            final Context neteaseContext = (Context) param.thisObject;
                             if (!Setting.getEnable()) {
                                 Command stop = new Command(0, Tools.Stop);
-                                Tools.shell(stop);
+                                Tools.shell(neteaseContext, stop);
                                 return;
                             }
 
-                            Context context = (Context) param.thisObject;
+
                             try {
-                                PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+                                PackageInfo info = neteaseContext.getPackageManager().getPackageInfo(neteaseContext.getPackageName(), 0);
                                 versionCode = info.versionCode;
                             } catch (NullPointerException e) {
                                 e.printStackTrace();
                             }
 
-                            final String processName = Tools.getCurrentProcessName(context);
+                            final String processName = Tools.getCurrentProcessName(neteaseContext);
                             //主进程脚本注入
                             if (processName.equals(Tools.HOOK_NAME)) {
-                                if (!initData(context))
+                                if (!initData(neteaseContext))
                                     return;
                                 if (Setting.getAd())
                                     Tools.deleteDirectory(Tools.neteaseCachePath);
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
-                                if (initData(context)) {
-                                    Command start;
+                                if (initData(neteaseContext)) {
                                     String port = " -p 23338";
                                     if (Setting.getSSL())
                                         port = port + ":23339";
-                                    if (!Setting.getLog())
-                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port);
-                                    else
-                                        start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
-                                            @Override
-                                            public void commandOutput(int id, String line) {
+                                    showLog = Setting.getLog();
+                                    Command start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
+                                        @Override
+                                        public void commandOutput(int id, String line) {
+                                            if (showLog)
                                                 XposedBridge.log(line);
+                                            if (firstToastShow) {
+                                                if (line.contains("Error")) {
+                                                    Tools.showToastOnLooper(neteaseContext, "运行失败，错误为：" + line);
+                                                    firstToastShow = false;
+                                                } else if (line.contains("HTTP Server running")) {
+                                                    Tools.showToastOnLooper(neteaseContext, "运行成功，当前优先选择" + Setting.getOriginString() + "音源");
+                                                    firstToastShow = false;
+                                                }
                                             }
-                                        };
-                                    Tools.shell(start);
-                                    Toast.makeText(context, "成功运行，当前优先选择" + Setting.getOriginString() + "音源", Toast.LENGTH_LONG).show();
+                                        }
+                                    };
+                                    Tools.shell(neteaseContext, start);
                                 } else {
-                                    Toast.makeText(context, "文件完整性校验失败，请打开UnblockMusic Pro并同意存储卡访问权限!", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(neteaseContext, "文件完整性校验失败，请打开UnblockMusic Pro并同意存储卡访问权限!", Toast.LENGTH_LONG).show();
                                     return;
                                 }
                             }
@@ -108,7 +121,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                 final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
                                 if (versionCode == 110) {
                                     //强制HTTP走本地代理
-                                    hookAllConstructors(findClass("okhttp3.a", context.getClassLoader()), new XC_MethodHook() {
+                                    hookAllConstructors(findClass("okhttp3.a", neteaseContext.getClassLoader()), new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                             if (param.args.length >= 9) {
@@ -120,7 +133,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                     });
                                 } else if (versionCode >= 138) {
                                     //强制返回正确MD5
-                                    CloudMusicPackage.init(context);
+                                    CloudMusicPackage.init(neteaseContext);
                                     hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -136,7 +149,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                     });
 
                                     //解决有版权歌曲无法缓冲
-                                    hookAllMethods(findClass("okhttp3.RealCall", context.getClassLoader()), "newRealCall", new XC_MethodHook() {
+                                    hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                             if (param.args.length == 3) {
@@ -165,7 +178,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
                                     //去广告
                                     if (Setting.getAd()) {
-                                        hookAllMethods(findClass("okhttp3.OkHttpClient", context.getClassLoader()), "newCall", new XC_MethodHook() {
+                                        hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
                                             @Override
                                             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                                 if (param.args.length == 1) {
@@ -186,7 +199,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
                                     //强制HTTP走本地代理
                                     if (Setting.getSSL()) {
-                                        hookAllConstructors(findClass("okhttp3.OkHttpClient", context.getClassLoader()), new XC_MethodHook() {
+                                        hookAllConstructors(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), new XC_MethodHook() {
                                             @Override
                                             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                                 if (param.args.length == 1) {
@@ -210,6 +223,22 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             }
                         }
                     });
+        }
+    }
+
+    private static void logText(String name, Object object) {
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            try {
+                boolean accessFlag1 = field.isAccessible();
+                field.setAccessible(true);
+                XposedBridge.log(name + "->" + field.getName() + "->" + field.get(object));
+                field.setAccessible(accessFlag1);
+            } catch (IllegalArgumentException ex) {
+                ex.printStackTrace();
+            } catch (IllegalAccessException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -240,7 +269,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             if (!codeVersionString.equals(sdCartVersionString)) {
                 Tools.copyFilesFromSD(Tools.SDCardPath, codePath);
                 Command command = new Command(0, "cd " + codePath, "chmod 770 *");
-                Tools.shell(command);
+                Tools.shell(context, command);
             }
         } catch (JSONException e) {
             e.printStackTrace();
