@@ -2,6 +2,7 @@ package com.raincat.unblockmusicpro;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.Handler;
 import android.os.Looper;
@@ -48,9 +49,14 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static final Pattern REX_MD5 = Pattern.compile("[a-f0-9]{32}", Pattern.CASE_INSENSITIVE);
     private static int versionCode = 0;
     private static String codePath = "";
-
     private static boolean firstToastShow = true;
+    private static boolean removeAd = true;
+    private static boolean removeUpdate = true;
+    private static boolean hookStart = false;
     private static boolean showLog = false;
+
+    private static Object sslSocketFactory = null;
+    private static SharedPreferences preferences;
 
     @Override
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) {
@@ -72,13 +78,15 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                 return;
                             }
 
-
                             try {
                                 PackageInfo info = neteaseContext.getPackageManager().getPackageInfo(neteaseContext.getPackageName(), 0);
                                 versionCode = info.versionCode;
                             } catch (NullPointerException e) {
                                 e.printStackTrace();
                             }
+
+                            preferences = neteaseContext.getSharedPreferences("share", Context.MODE_MULTI_PROCESS);
+                            preferences.edit().remove("hook").apply();
 
                             final String processName = Tools.getCurrentProcessName(neteaseContext);
                             //主进程脚本注入
@@ -89,9 +97,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                     Tools.deleteDirectory(Tools.neteaseCachePath);
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(neteaseContext)) {
-                                    String port = " -p 23338";
-                                    if (Setting.getSSL())
-                                        port = port + ":23339";
+                                    String port = " -p 23338:23339";
                                     showLog = Setting.getLog();
                                     Command start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
                                         @Override
@@ -103,6 +109,9 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                                     Tools.showToastOnLooper(neteaseContext, "运行失败，错误为：" + line);
                                                     firstToastShow = false;
                                                 } else if (line.contains("HTTP Server running")) {
+                                                    if (preferences == null)
+                                                        preferences = neteaseContext.getSharedPreferences("share", Context.MODE_MULTI_PROCESS);
+                                                    preferences.edit().putBoolean("hook", true).apply();
                                                     Tools.showToastOnLooper(neteaseContext, "运行成功，当前优先选择" + Setting.getOriginString() + "音源");
                                                     firstToastShow = false;
                                                 }
@@ -126,99 +135,70 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                             if (param.args.length >= 9) {
                                                 param.args[8] = proxy;
-                                                if (Setting.getSSL())
-                                                    param.args[4] = socketFactory;
+//                                                if (Setting.getSSL())
+//                                                    param.args[4] = socketFactory;
                                             }
                                         }
                                     });
                                 } else if (versionCode >= 138) {
-                                    //强制返回正确MD5
-                                    CloudMusicPackage.init(neteaseContext);
-                                    hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            Object file = param.args[0];
-                                            if (file instanceof File) {
-                                                String path = param.args[0].toString();
-                                                Matcher matcher = REX_MD5.matcher(path);
-                                                if (matcher.find()) {
-                                                    param.setResult(matcher.group());
-                                                }
-                                            }
-                                        }
-                                    });
-
-                                    //解决有版权歌曲无法缓冲
+                                    //强制走代理模式
                                     hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                            if (!hookStart) {
+                                                preferences = neteaseContext.getSharedPreferences("share", Context.MODE_MULTI_PROCESS);
+                                                hookStart = preferences.getBoolean("hook", false);
+                                            }
+                                            if (!hookStart)
+                                                return;
+
                                             if (param.args.length == 3) {
                                                 Object client = param.args[0];
                                                 Object request = param.args[1];
-                                                Field httpUrl = request.getClass().getDeclaredField("url");
-                                                httpUrl.setAccessible(true);
-                                                Object urlObj = httpUrl.get(request);
 
+                                                Field urlField = request.getClass().getDeclaredField("url");
+                                                urlField.setAccessible(true);
                                                 Field proxyField = client.getClass().getDeclaredField("proxy");
-                                                boolean proxyFlag = proxyField.isAccessible();
                                                 proxyField.setAccessible(true);
-//                                                if (urlObj.toString().contains("eapi/login") || urlObj.toString().contains("eapi/batch") || urlObj.toString().contains("eapi/college")
-//                                                        || urlObj.toString().contains("eapi/nmusician") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic")
-//                                                        || urlObj.toString().contains("jdyyaac")) {
-                                                if (urlObj.toString().contains("jdyyaac") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic")) {
+                                                Field sslSocketFactoryField = client.getClass().getDeclaredField("sslSocketFactory");
+                                                sslSocketFactoryField.setAccessible(true);
+                                                if (sslSocketFactory == null) {
+                                                    sslSocketFactory = sslSocketFactoryField.get(client);
+                                                }
+
+                                                Object urlObj = urlField.get(request);
+                                                if (urlObj.toString().contains("yyaac") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic") || urlObj.toString().contains("&thumbnail")) {
                                                     proxyField.set(client, null);
+                                                    sslSocketFactoryField.set(client, sslSocketFactory);
                                                 } else {
                                                     proxyField.set(client, proxy);
+                                                    sslSocketFactoryField.set(client, socketFactory);
                                                 }
-                                                proxyField.setAccessible(proxyFlag);
                                                 param.args[0] = client;
                                             }
                                         }
                                     });
 
-                                    //去广告
-                                    if (Setting.getAd()) {
-                                        hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
-                                            @Override
-                                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                                if (param.args.length == 1) {
-                                                    Object request = param.args[0];
-                                                    Field httpUrl = request.getClass().getDeclaredField("url");
-                                                    httpUrl.setAccessible(true);
-                                                    Object urlObj = httpUrl.get(request);
-                                                    if (urlObj.toString().contains("eapi/ad/")) {
-                                                        Field url = urlObj.getClass().getDeclaredField("url");
-                                                        url.setAccessible(true);
-                                                        url.set(urlObj, "https://33.123.321.14/");
-                                                        param.args[0] = request;
-                                                    }
+                                    removeAd = Setting.getAd();
+                                    removeUpdate = Setting.getUpdate();
+                                    //去广告和去升级
+                                    hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                            if (param.args.length == 1) {
+                                                Object request = param.args[0];
+                                                Field httpUrl = request.getClass().getDeclaredField("url");
+                                                httpUrl.setAccessible(true);
+                                                Object urlObj = httpUrl.get(request);
+                                                if ((removeAd && urlObj.toString().contains("eapi/ad/")) || (removeUpdate && urlObj.toString().contains("android/version"))) {
+                                                    Field url = urlObj.getClass().getDeclaredField("url");
+                                                    url.setAccessible(true);
+                                                    url.set(urlObj, "https://33.123.321.14/");
+                                                    param.args[0] = request;
                                                 }
                                             }
-                                        });
-                                    }
-
-                                    //强制HTTP走本地代理
-                                    if (Setting.getSSL()) {
-                                        hookAllConstructors(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), new XC_MethodHook() {
-                                            @Override
-                                            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                                if (param.args.length == 1) {
-                                                    Object okHttpClientBuilder = param.args[0];
-//                                                  Field proxyField = okHttpClientBuilder.getClass().getDeclaredField("proxy");
-//                                                  boolean proxyFlag = proxyField.isAccessible();
-//                                                  proxyField.setAccessible(true);
-//                                                  proxyField.set(okHttpClientBuilder, proxy);
-//                                                  proxyField.setAccessible(proxyFlag);
-//                                                  param.args[0] = okHttpClientBuilder;
-
-                                                    Field sslSocketFactoryField = okHttpClientBuilder.getClass().getDeclaredField("sslSocketFactory");
-                                                    sslSocketFactoryField.setAccessible(true);
-                                                    sslSocketFactoryField.set(okHttpClientBuilder, socketFactory);
-                                                    param.args[0] = okHttpClientBuilder;
-                                                }
-                                            }
-                                        });
-                                    }
+                                        }
+                                    });
                                 }
                             }
                         }

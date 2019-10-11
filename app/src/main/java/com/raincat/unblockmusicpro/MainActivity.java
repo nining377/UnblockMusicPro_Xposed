@@ -43,8 +43,8 @@ import java.io.File;
 
 public class MainActivity extends PermissionProxyActivity {
     private Context context;
-    private RelativeLayout rela_enable, rela_ad, rela_high, rela_ssl, rela_hide, rela_log;
-    private CheckBox cb_enable, cb_ad, cb_high, cb_ssl, cb_hide, cb_log;
+    private RelativeLayout rela_enable, rela_ad, rela_update, rela_high, rela_ssl, rela_hide, rela_log;
+    private CheckBox cb_enable, cb_ad, cb_update, cb_high, cb_ssl, cb_hide, cb_log;
     private TextView tv_update, tv_faq, tv_version, tv_script, tv_perfect[];
     private ImageView iv_question, iv_version, iv_script;
     private RadioGroup rg_origin;
@@ -109,6 +109,7 @@ public class MainActivity extends PermissionProxyActivity {
                     Tools.copyFilesAssets(context, "node-64bit", Tools.SDCardPath);
                 else
                     Tools.copyFilesAssets(context, "node-32bit", Tools.SDCardPath);
+                changeQuality(cb_high.isChecked());
             } else
                 Tools.nowVersion = localVersionString;
             Tools.copyFilesAssets(context, "log", Tools.SDCardPath);
@@ -128,12 +129,14 @@ public class MainActivity extends PermissionProxyActivity {
     private void initView() {
         rela_enable = (RelativeLayout) findViewById(R.id.rela_enable);
         rela_ad = (RelativeLayout) findViewById(R.id.rela_ad);
+        rela_update = (RelativeLayout) findViewById(R.id.rela_update);
         rela_high = (RelativeLayout) findViewById(R.id.rela_high);
         rela_ssl = (RelativeLayout) findViewById(R.id.rela_ssl);
         rela_hide = (RelativeLayout) findViewById(R.id.rela_hide);
         rela_log = (RelativeLayout) findViewById(R.id.rela_log);
         cb_enable = (CheckBox) findViewById(R.id.cb_enable);
         cb_ad = (CheckBox) findViewById(R.id.cb_ad);
+        cb_update = (CheckBox) findViewById(R.id.cb_update);
         cb_high = (CheckBox) findViewById(R.id.cb_high);
         cb_ssl = (CheckBox) findViewById(R.id.cb_ssl);
         cb_hide = (CheckBox) findViewById(R.id.cb_hide);
@@ -163,6 +166,7 @@ public class MainActivity extends PermissionProxyActivity {
         rg_origin.check(Tools.originResId[originIndex]);
         cb_enable.setChecked(share.getBoolean("enable", true));
         cb_ad.setChecked(share.getBoolean("ad", true));
+        cb_update.setChecked(share.getBoolean("update", true));
         cb_ssl.setChecked(share.getBoolean("ssl", true));
         cb_high.setChecked(share.getBoolean("high", false));
         cb_hide.setChecked(share.getBoolean("hide", false));
@@ -209,6 +213,16 @@ public class MainActivity extends PermissionProxyActivity {
                 boolean isChecked = !cb_ad.isChecked();
                 cb_ad.setChecked(isChecked);
                 share.edit().putBoolean("ad", isChecked).apply();
+                Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        rela_update.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isChecked = !cb_update.isChecked();
+                cb_update.setChecked(isChecked);
+                share.edit().putBoolean("update", isChecked).apply();
                 Toast.makeText(context, "操作成功，请重启网易云音乐！", Toast.LENGTH_SHORT).show();
             }
         });

@@ -5,6 +5,7 @@
     <string name="setting">设置</string>
     <string name="enable">启用模块</string>
     <string name="ad">去广告</string>
+    <string name="update">去升级</string>
     <string name="high_quality">尝试获取高音质</string>
     <string name="ssl">监听443端口</string>
     <string name="hide">隐藏本模块图标</string>

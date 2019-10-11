@@ -46,13 +46,13 @@ import javax.net.ssl.TrustManagerFactory;
  *     author : RainCat
  *     e-mail : nining377@gmail.com
  *     time   : 2019/09/08
- *     desc   : 说明
+ *     desc   : 工具类
  *     version: 1.0
  * </pre>
  */
 
 public class Tools {
-    static String nowVersion = "0.19.4";
+    static String nowVersion = "0.20.0";
 
     final static String HOOK_NAME = "com.netease.cloudmusic";
     final static String SDCardPath = Environment.getExternalStorageDirectory() + "/UnblockMusicPro";

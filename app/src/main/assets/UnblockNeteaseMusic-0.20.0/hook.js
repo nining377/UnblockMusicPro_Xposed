@@ -66,7 +66,7 @@ hook.target.path = [
 
 hook.request.before = ctx => {
 	const req = ctx.req
-	req.url = (req.url.startsWith('http://') ? '' : (req.socket.encrypted ? 'https:' : 'http:') + '//' + (hook.target.host.includes(req.headers.host) ? req.headers.host : null)) + req.url
+	req.url = (req.url.startsWith('http://') ? '' : (req.socket.encrypted ? 'https:' : 'http:') + '//' + (['music.163.com', 'music.126.net'].some(domain => (req.headers.host || '').endsWith(domain)) ? req.headers.host : null)) + req.url
 	const url = parse(req.url)
 	if([url.hostname, req.headers.host].some(host => hook.target.host.includes(host)) && req.method == 'POST' && (url.path == '/api/linux/forward' || url.path.startsWith('/eapi/'))){
 		return request.read(req)
@@ -100,7 +100,7 @@ hook.request.before = ctx => {
 		})
 		.catch(error => console.log(error, ctx.req.url))
 	}
-	else if((hook.target.host.includes(url.hostname)) && url.path.startsWith('/weapi/')){
+	else if((hook.target.host.includes(url.hostname)) && (url.path.startsWith('/weapi/') || url.path.startsWith('/api/'))){
 		ctx.req.headers['X-Real-IP'] = '118.88.88.88'
 		ctx.netease = {web: true, path: url.path.replace(/^\/weapi\//, '/api/').replace(/\?.+$/, '').replace(/\/\d*$/, '')}
 	}
@@ -127,7 +127,7 @@ hook.request.after = ctx => {
 	const proxyRes = ctx.proxyRes
 	if(netease && hook.target.path.includes(netease.path) && proxyRes.statusCode == 200){
 		return request.read(proxyRes, true)
-		.then(buffer => proxyRes.body = buffer)
+		.then(buffer => buffer.length ? proxyRes.body = buffer : Promise.reject())
 		.then(buffer => {
 			const patch = string => string.replace(/([^\\]"\s*:\s*)(\d{16,})(\s*[}|,])/g, '$1"$2L"$3') // for js precision
 			try{
@@ -168,7 +168,7 @@ hook.request.after = ctx => {
 			body = body.replace(/([^\\]"\s*:\s*)"(\d{16,})L"(\s*[}|,])/g, '$1$2$3') // for js precision
 			proxyRes.body = (netease.encrypted ? crypto.eapi.encrypt(Buffer.from(body)) : body)
 		})
-		.catch(error => console.log(error, ctx.req.url))
+		.catch(error => error ? console.log(error, ctx.req.url) : null)
 	}
 	else if(package){
 		const req = ctx.req
@@ -285,6 +285,7 @@ const tryMatch = ctx => {
 				item.size = song.size
 				item.code = 200
 				item.type = 'mp3'
+				item.freeTrialInfo = null
 				return song
 			})
 			.then(song => {
@@ -298,7 +299,7 @@ const tryMatch = ctx => {
 					return !difference || difference[0] <= difference[1]
 				}
 				const limit = {android: '0.0.0', osx: '2.0.0'}
-				const task = {key: song.url.replace(/\?.*$/, ''), url: song.url}
+				const task = {key: song.url.replace(/\?.*$/, '').replace(/(?<=kugou\.com\/)\w+\/\w+\//, '').replace(/(?<=kuwo\.cn\/)\w+\/\w+\/resource\//, ''), url: song.url}
 				try{
 					let header = netease.param.header
 					let cookie = querystring.parse(ctx.req.headers.cookie.replace(/\s/g, ''), ';')
