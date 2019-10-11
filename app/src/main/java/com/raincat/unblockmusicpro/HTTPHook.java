@@ -141,6 +141,22 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         }
                                     });
                                 } else if (versionCode >= 138) {
+                                    //强制返回正确MD5
+                                    CloudMusicPackage.init(neteaseContext);
+                                    hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                            Object file = param.args[0];
+                                            if (file instanceof File) {
+                                                String path = param.args[0].toString();
+                                                Matcher matcher = REX_MD5.matcher(path);
+                                                if (matcher.find()) {
+                                                    param.setResult(matcher.group());
+                                                }
+                                            }
+                                        }
+                                    });
+
                                     //强制走代理模式
                                     hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
                                         @Override
