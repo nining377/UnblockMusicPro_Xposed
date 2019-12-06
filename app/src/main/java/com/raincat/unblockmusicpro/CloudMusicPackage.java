@@ -108,26 +108,27 @@ public class CloudMusicPackage {
 
     public static class Transfer {
         private static Method calcMd5Method;
+        private static Method checkMd5Method;
 
-        public static Method getCalcMd5Method() {
-            if (calcMd5Method == null) {
-                Pattern pattern = Pattern.compile("^com\\.netease\\.cloudmusic\\.module\\.transfer\\.[a-z]\\.[a-z]$");
+        public static Method getCheckMd5Method() {
+            if (checkMd5Method == null) {
+                Pattern pattern = Pattern.compile("^com\\.netease\\.cloudmusic\\.module\\.transfer\\.download\\.[a-z]$");
                 List<String> list = getFilteredClasses(pattern, Collections.reverseOrder());
 
                 try {
-                    calcMd5Method = Stream.of(list)
+                    checkMd5Method = Stream.of(list)
                             .map(c -> findClass(c, getClassLoader()).getDeclaredMethods())
                             .flatMap(Stream::of)
-                            .filter(m -> m.getReturnType() == String.class)
-                            .filter(m -> m.getParameterTypes().length == 2)
+                            .filter(m -> m.getParameterTypes().length == 4)
                             .filter(m -> m.getParameterTypes()[0] == File.class)
+                            .filter(m -> m.getParameterTypes()[1] == File.class)
                             .findFirst()
                             .get();
                 } catch (NoSuchElementException e) {
-                    throw new RuntimeException("can't find getCalcMd5Method");
+                    throw new RuntimeException("can't find checkMd5Method");
                 }
             }
-            return calcMd5Method;
+            return checkMd5Method;
         }
     }
 

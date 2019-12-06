@@ -143,17 +143,13 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                 } else if (versionCode >= 138) {
                                     //强制返回正确MD5
                                     CloudMusicPackage.init(neteaseContext);
-                                    hookMethod(CloudMusicPackage.Transfer.getCalcMd5Method(), new XC_MethodHook() {
+                                    hookMethod(CloudMusicPackage.Transfer.getCheckMd5Method(), new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            Object file = param.args[0];
-                                            if (file instanceof File) {
-                                                String path = param.args[0].toString();
-                                                Matcher matcher = REX_MD5.matcher(path);
-                                                if (matcher.find()) {
-                                                    param.setResult(matcher.group());
-                                                }
-                                            }
+                                            final Object[] array = (Object[]) param.args[3];
+                                            String path = param.args[0].toString();
+                                            array[5] = Tools.fileToMD5(path);
+                                            param.args[3] = array;
                                         }
                                     });
 
