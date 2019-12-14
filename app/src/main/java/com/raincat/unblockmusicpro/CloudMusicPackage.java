@@ -75,7 +75,7 @@ public class CloudMusicPackage {
                     Enumeration zip = new ZipFile(apkFile).entries();
                     while (zip.hasMoreElements()) {
                         ZipEntry dexInZip = (ZipEntry) zip.nextElement();
-                        if (dexInZip.getName().endsWith(".dex")) {
+                        if (dexInZip.getName().startsWith("classes")&&dexInZip.getName().endsWith(".dex")) {
                             DexBackedDexFile dexFile = DexFileFactory.loadDexEntry(apkFile, dexInZip.getName(), true, null);
                             for (DexBackedClassDef classDef : dexFile.getClasses()) {
                                 String classType = classDef.getType();
