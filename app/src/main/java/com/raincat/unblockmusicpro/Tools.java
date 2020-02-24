@@ -53,7 +53,7 @@ import javax.net.ssl.TrustManagerFactory;
  */
 
 public class Tools {
-    static String nowVersion = "0.20.0";
+    static String nowVersion = "0.24.1";
 
     final static String HOOK_NAME = "com.netease.cloudmusic";
     final static String SDCardPath = Environment.getExternalStorageDirectory() + "/UnblockMusicPro";
@@ -262,7 +262,8 @@ public class Tools {
                 }
             }
             inZip.close();
-            szName = szName.substring(0, szName.lastIndexOf(File.separator));
+
+            szName = szName.substring(0, szName.indexOf(File.separator));
             copyFilesFromSD(outPathString + File.separator + szName, outPathString);
             deleteDirectory(outPathString + File.separator + szName);
         } catch (IOException e) {

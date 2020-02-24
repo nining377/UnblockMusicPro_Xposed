@@ -79,7 +79,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             }
 
                             try {
-                                PackageInfo info = neteaseContext.getPackageManager().getPackageInfo(neteaseContext.getPackageName(), 0);
+                                PackageInfo info = neteaseContext.getPackageManager().getPackageInfo(Tools.HOOK_NAME, 0);
                                 versionCode = info.versionCode;
                             } catch (NullPointerException e) {
                                 e.printStackTrace();
@@ -95,8 +95,10 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                     return;
                                 if (Setting.getAd())
                                     Tools.deleteDirectory(Tools.neteaseCachePath);
+                                new BlackHook(neteaseContext, versionCode);
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(neteaseContext)) {
+                                    new BlackHook(neteaseContext, versionCode);
                                     String port = " -p 23338:23339";
                                     showLog = Setting.getLog();
                                     Command start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
