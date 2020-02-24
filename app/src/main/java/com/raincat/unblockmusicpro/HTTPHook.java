@@ -1,11 +1,8 @@
 package com.raincat.unblockmusicpro;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.os.Handler;
-import android.os.Looper;
 import android.widget.Toast;
 
 import com.stericson.RootShell.execution.Command;
@@ -17,7 +14,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -95,10 +91,8 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                     return;
                                 if (Setting.getAd())
                                     Tools.deleteDirectory(Tools.neteaseCachePath);
-                                new BlackHook(neteaseContext, versionCode);
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(neteaseContext)) {
-                                    new BlackHook(neteaseContext, versionCode);
                                     String port = " -p 23338:23339";
                                     showLog = Setting.getLog();
                                     Command start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
