@@ -110,8 +110,10 @@ public class MainActivity extends PermissionProxyActivity {
                 else
                     Tools.copyFilesAssets(context, "node-32bit", Tools.SDCardPath);
                 changeQuality(cb_high.isChecked());
-            } else
+            } else {
                 Tools.nowVersion = localVersionString;
+                Tools.copyFilesAssets(context, "UnblockNeteaseMusic-" + Tools.nowVersion.replace("-high", "") + "/node_modules", Tools.SDCardPath + "/node_modules");
+            }
             Tools.copyFilesAssets(context, "log", Tools.SDCardPath);
         } catch (JSONException e) {
             e.printStackTrace();
