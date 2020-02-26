@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/UnblockMusicPro_Xposed.iml" filepath="$PROJECT_DIR$/UnblockMusicPro_Xposed.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/hotxposed/hotxposed.iml" filepath="$PROJECT_DIR$/hotxposed/hotxposed.iml" />
     </modules>
   </component>
 </project>

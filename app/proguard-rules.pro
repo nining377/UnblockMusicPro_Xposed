@@ -20,10 +20,15 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep public class com.raincat.unblockmusicpro.HTTPHook
 -keep public class android.app.**
 -keepclassmembernames class com.raincat.unblockmusicpro.MainActivity {
     boolean isModuleActive();
+}
+
+-keep class net.androidwing.hotxposed.* {*;}
+-keep class com.raincat.unblockmusicpro.MainHook
+-keep public class com.raincat.unblockmusicpro.HTTPHook* {
+    void dispatch(*);
 }
 
 -dontwarn sun.misc.Unsafe

@@ -390,15 +390,15 @@ public class MainActivity extends PermissionProxyActivity {
             e.printStackTrace();
         }
         if (high) {
-            packageJson = packageJson.replace(localVersionString, localVersionString + "-high");
-            if (!kuwo.contains("\nmodule.exports.ENABLE_FLAC = 'true'")) {
+            if (!packageJson.contains("-high"))
+                packageJson = packageJson.replace(localVersionString, localVersionString + "-high");
+            if (!kuwo.contains("\nmodule.exports.ENABLE_FLAC = 'true'"))
                 kuwo = kuwo + "\nmodule.exports.ENABLE_FLAC = 'true'";
-            }
 //            migu = migu.replace("/*'sqPlayInfo'*/,", "'sqPlayInfo',");
             hook = hook.replace("(item.code != 200 || item.freeTrialInfo)", "(item.code != 200 || item.freeTrialInfo || item.br <= 128000)");
         } else {
             packageJson = packageJson.replace(localVersionString, localVersionString.replace("-high", ""));
-            kuwo = kuwo.replace("\nmodule.exports.ENABLE_FLAC = 'true'", "");
+            kuwo = kuwo.replace("\n\nmodule.exports.ENABLE_FLAC = 'true'", "");
 //            migu = migu.replace("'sqPlayInfo',", "/*'sqPlayInfo'*/,");
             hook = hook.replace("(item.code != 200 || item.freeTrialInfo || item.br <= 128000)", "(item.code != 200 || item.freeTrialInfo)");
         }
