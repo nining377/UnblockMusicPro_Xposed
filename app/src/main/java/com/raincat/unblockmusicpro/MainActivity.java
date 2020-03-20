@@ -110,8 +110,10 @@ public class MainActivity extends PermissionProxyActivity {
                 else
                     Tools.copyFilesAssets(context, "node-32bit", Tools.SDCardPath);
                 changeQuality(cb_high.isChecked());
-            } else
+            } else {
                 Tools.nowVersion = localVersionString;
+                Tools.copyFilesAssets(context, "UnblockNeteaseMusic-" + Tools.nowVersion.replace("-high", "") + "/node_modules", Tools.SDCardPath + "/node_modules");
+            }
             Tools.copyFilesAssets(context, "log", Tools.SDCardPath);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -159,7 +161,7 @@ public class MainActivity extends PermissionProxyActivity {
 
         tv_version.setText(BuildConfig.VERSION_NAME);
         tv_perfect[0].setText("Google：4.3.1");
-        tv_perfect[1].setText("Global：6.0.0～6.4.1");
+        tv_perfect[1].setText("Global：6.0.0～7.0.20");
 
         share = getSharedPreferences("share", Context.MODE_WORLD_READABLE);
         originIndex = share.getInt("origin", 0);
@@ -379,9 +381,9 @@ public class MainActivity extends PermissionProxyActivity {
      */
     private void changeQuality(boolean high) {
         String packageJson = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "package.json");
-//        String kuwo = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "kuwo.js");
-        String migu = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "migu.js");
-        String hook = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "hook.js");
+        String kuwo = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "src" + File.separator + "provider" + File.separator + "select.js");
+//        String migu = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "src" + File.separator + "provider" + File.separator + "migu.js");
+        String hook = Tools.readFileFromSD(Tools.SDCardPath + File.separator + "src" + File.separator + "hook.js");
         String localVersionString = "";
         try {
             JSONObject jsonObject = new JSONObject(packageJson);
@@ -390,20 +392,22 @@ public class MainActivity extends PermissionProxyActivity {
             e.printStackTrace();
         }
         if (high) {
-            packageJson = packageJson.replace(localVersionString, localVersionString + "-high");
-//            kuwo = kuwo.replace("&format=mp3&", "&format=aac|mp3&");
-            migu = migu.replace("/*'sqPlayInfo'*/,", "'sqPlayInfo',");
-            hook = hook.replace("(item.code != 200 || item.freeTrialInfo)", "(item.code != 200 || item.freeTrialInfo ||item.br <= 128000)");
+            if (!packageJson.contains("-high"))
+                packageJson = packageJson.replace(localVersionString, localVersionString + "-high");
+            if (!kuwo.contains("\nmodule.exports.ENABLE_FLAC = 'true'"))
+                kuwo = kuwo + "\nmodule.exports.ENABLE_FLAC = 'true'";
+//            migu = migu.replace("/*'sqPlayInfo'*/,", "'sqPlayInfo',");
+            hook = hook.replace("(item.code != 200 || item.freeTrialInfo)", "(item.code != 200 || item.freeTrialInfo || item.br <= 128000)");
         } else {
             packageJson = packageJson.replace(localVersionString, localVersionString.replace("-high", ""));
-//            kuwo = kuwo.replace("&format=aac|mp3&", "&format=mp3&");
-            migu = migu.replace("'sqPlayInfo',", "/*'sqPlayInfo'*/,");
-            hook = hook.replace("(item.code != 200 || item.freeTrialInfo ||item.br <= 128000)", "(item.code != 200 || item.freeTrialInfo)");
+            kuwo = kuwo.replace("\n\nmodule.exports.ENABLE_FLAC = 'true'", "");
+//            migu = migu.replace("'sqPlayInfo',", "/*'sqPlayInfo'*/,");
+            hook = hook.replace("(item.code != 200 || item.freeTrialInfo || item.br <= 128000)", "(item.code != 200 || item.freeTrialInfo)");
         }
         Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "package.json", packageJson);
-//        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "kuwo.js", kuwo);
-        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "provider" + File.separator + "migu.js", migu);
-        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "hook.js", hook);
+        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "src" + File.separator + "provider" + File.separator + "select.js", kuwo);
+//        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "src" + File.separator + "provider" + File.separator + "migu.js", migu);
+        Tools.writeFileFromSD(Tools.SDCardPath + File.separator + "src" + File.separator + "hook.js", hook);
         initData();
     }
 

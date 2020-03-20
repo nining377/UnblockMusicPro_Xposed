@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Environment;
 
 import com.annimon.stream.Stream;
 
@@ -42,6 +43,9 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
  */
 
 public class CloudMusicPackage {
+    public final static String CACHE_PATH = Environment.getExternalStorageDirectory() + "/netease/cloudmusic/Ad";
+    public final static String CACHE_PATH2 = Environment.getExternalStorageDirectory() + "/Android/data/com.netease.cloudmusic/cache";
+
     private static WeakReference<List<String>> allClassList = new WeakReference<>(null);
 
     static void init(Context context) throws PackageManager.NameNotFoundException {

@@ -1,8 +1,0 @@
-.npmignore
-.gitignore
-.dockerignore
-
-Dockerfile*
-*.yml
-hooks/
-browser/

@@ -1,14 +1,15 @@
 package com.raincat.unblockmusicpro;
 
-import android.app.Application;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Bundle;
 import android.widget.Toast;
 
 import com.stericson.RootShell.execution.Command;
+
+import net.androidwing.hotxposed.IHookerDispatcher;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,15 +18,11 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -45,7 +42,7 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
  * </pre>
  */
 
-public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
+public class HTTPHook implements IHookerDispatcher {
     private static final Pattern REX_MD5 = Pattern.compile("[a-f0-9]{32}", Pattern.CASE_INSENSITIVE);
     private static int versionCode = 0;
     private static String codePath = "";
@@ -59,12 +56,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static SharedPreferences preferences;
 
     @Override
-    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) {
-        if (lpparam.packageName.equals(BuildConfig.APPLICATION_ID)) {
-            findAndHookMethod(findClass(MainActivity.class.getName(), lpparam.classLoader),
-                    "isModuleActive", XC_MethodReplacement.returnConstant(true));
-        }
-
+    public void dispatch(XC_LoadPackage.LoadPackageParam lpparam) {
         //Hook入口
         if (lpparam.packageName.equals(Tools.HOOK_NAME)) {
             findAndHookMethod(findClass("com.netease.cloudmusic.NeteaseMusicApplication", lpparam.classLoader),
@@ -79,7 +71,7 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             }
 
                             try {
-                                PackageInfo info = neteaseContext.getPackageManager().getPackageInfo(neteaseContext.getPackageName(), 0);
+                                PackageInfo info = neteaseContext.getPackageManager().getPackageInfo(Tools.HOOK_NAME, 0);
                                 versionCode = info.versionCode;
                             } catch (NullPointerException e) {
                                 e.printStackTrace();
@@ -191,9 +183,19 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                                         }
                                     });
 
+                                    //去广告和去升级
                                     removeAd = Setting.getAd();
                                     removeUpdate = Setting.getUpdate();
-                                    //去广告和去升级
+                                    Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH);
+                                    Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH2);
+                                    findAndHookMethod("com.netease.cloudmusic.activity.LoadingAdActivity", neteaseContext.getClassLoader(),
+                                            "onCreate", Bundle.class, new XC_MethodHook() {
+                                                @Override
+                                                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                                    ((Activity) param.thisObject).finish();
+                                                    param.setResult(null);
+                                                }
+                                            });
                                     hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
@@ -270,9 +272,5 @@ public class HTTPHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         codeVersionString = Tools.readFileFromSD(codePath + File.separator + "package.json");
         return codeVersionString.length() != 0;
-    }
-
-    @Override
-    public void initZygote(StartupParam startupParam) throws Throwable {
     }
 }
