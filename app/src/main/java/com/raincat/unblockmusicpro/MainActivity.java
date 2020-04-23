@@ -14,8 +14,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AlertDialog;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
@@ -49,6 +52,7 @@ public class MainActivity extends PermissionProxyActivity {
     private ImageView iv_question, iv_version, iv_script;
     private RadioGroup rg_origin;
     private LinearLayout linear_version, linear_script;
+    private EditText et_proxy;
 
     private int originIndex = 0;
     private SharedPreferences share;
@@ -159,6 +163,8 @@ public class MainActivity extends PermissionProxyActivity {
         linear_version = (LinearLayout) findViewById(R.id.linear_version);
         linear_script = (LinearLayout) findViewById(R.id.linear_script);
 
+        et_proxy = (EditText) findViewById(R.id.et_proxy);
+
         tv_version.setText(BuildConfig.VERSION_NAME);
         tv_perfect[0].setText("Google：4.3.1");
         tv_perfect[1].setText("Global：6.0.0～7.0.20");
@@ -173,6 +179,9 @@ public class MainActivity extends PermissionProxyActivity {
         cb_high.setChecked(share.getBoolean("high", false));
         cb_hide.setChecked(share.getBoolean("hide", false));
         cb_log.setChecked(share.getBoolean("log", false));
+        String proxyContent = share.getString("proxy", "127.0.0.1:23338");
+        et_proxy.setText(proxyContent);
+        et_proxy.setSelection(proxyContent.length());
     }
 
     private void listener() {
@@ -315,6 +324,25 @@ public class MainActivity extends PermissionProxyActivity {
                     showUpdateDialog("更新脚本 - " + scriptUpdate.version, "注意：下载不了多试几次，相信自己是最胖的！", scriptUpdate);
                 } else
                     Toast.makeText(context, "脚本已是最新版本！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        et_proxy.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if ("".contentEquals(s)) {
+                    share.edit().remove("proxy").apply();
+                    return;
+                }
+                share.edit().putString("proxy", s.toString()).apply();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
             }
         });
     }

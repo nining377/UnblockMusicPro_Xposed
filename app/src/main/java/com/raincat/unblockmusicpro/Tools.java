@@ -485,4 +485,24 @@ public class Tools {
         }
         return returnVal.toLowerCase();
     }
+
+    public static boolean isNumeric (String str) {
+        for (int i = str.length(); --i >=0;) {
+            if (!Character.isDigit(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isPort(String text) {
+        if (Tools.isNumeric(text)) {
+            try{
+                Integer port = Integer.valueOf(text);
+                return port > 0 && port < 65535;
+            }catch (Exception ignore){
+            }
+        }
+        return false;
+    }
 }

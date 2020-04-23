@@ -5,6 +5,7 @@
     <color name="colorAccent">#FF4081</color>
 
     <color name="colorText">#000</color>
+    <color name="colorEditor">#00000000</color>
     <color name="colorView">#CCC</color>
     <color name="colorButton">#EFF0F0</color>
     <color name="colorButton_text">#727272</color>

@@ -13,6 +13,9 @@ import de.robv.android.xposed.XSharedPreferences;
  */
 
 class Setting {
+
+    public static final String DEFAULT_PROXY = "127.0.0.1:23338";
+
     private static XSharedPreferences preferences;
 
     private static XSharedPreferences getModuleSharedPreferences() {
@@ -50,5 +53,14 @@ class Setting {
 
     static boolean getLog() {
         return getModuleSharedPreferences().getBoolean("log", false);
+    }
+
+    public static String getProxy() {
+        String proxy = getModuleSharedPreferences().getString("proxy", DEFAULT_PROXY);
+        String[] arr = proxy.split(":");
+        if (arr.length != 2 || !Tools.isPort(arr[1])) {
+            return DEFAULT_PROXY;
+        }
+        return proxy;
     }
 }

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -82,6 +81,7 @@ public class HTTPHook implements IHookerDispatcher {
                             preferences.edit().remove("hook").apply();
 
                             final String processName = Tools.getCurrentProcessName(neteaseContext);
+
                             //主进程脚本注入
                             if (processName.equals(Tools.HOOK_NAME)) {
                                 if (!initData(neteaseContext))
@@ -90,8 +90,18 @@ public class HTTPHook implements IHookerDispatcher {
                                     Tools.deleteDirectory(Tools.neteaseCachePath);
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(neteaseContext)) {
-                                    String port = " -p 23338:23339";
                                     showLog = Setting.getLog();
+                                    if (!Setting.DEFAULT_PROXY.equals(Setting.getProxy())) {
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                hook(neteaseContext, processName);
+                                                Tools.showToastOnLooper(neteaseContext, "运行成功，使用代理：" + Setting.getProxy());
+                                            }
+                                        }).start();
+                                        return;
+                                    }
+                                    String port = " -p 23338:23339";
                                     Command start = new Command(0, Tools.Stop, "cd " + codePath, Setting.getNodejs() + port) {
                                         @Override
                                         public void commandOutput(int id, String line) {
@@ -126,7 +136,8 @@ public class HTTPHook implements IHookerDispatcher {
     private void hook(Context neteaseContext, String processName) {
         if (processName.equals(Tools.HOOK_NAME) || processName.equals(Tools.HOOK_NAME + ":play")) {
             final SSLSocketFactory socketFactory = Tools.getSLLContext(codePath + File.separator + "ca.crt").getSocketFactory();
-            final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
+            String[] ipPort = Setting.getProxy().split(":");
+            final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ipPort[0], Integer.valueOf(ipPort[1])));
             if (versionCode == 110) {
                 //强制HTTP走本地代理
                 hookAllConstructors(findClass("okhttp3.a", neteaseContext.getClassLoader()), new XC_MethodHook() {

@@ -27,4 +27,5 @@
     <string name="menu_faq">问题解答</string>
 
     <string name="Module_is_Not_Active">模块未激活</string>
+    <string name="proxy">自定义代理</string>
 </resources>
