@@ -16,7 +16,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,7 +47,7 @@ public class CloudMusicPackage {
 
     private static WeakReference<List<String>> allClassList = new WeakReference<>(null);
 
-    static void init(Context context) throws PackageManager.NameNotFoundException {
+    static void init(Context context) {
         NeteaseMusicApplication.init(context);
     }
 

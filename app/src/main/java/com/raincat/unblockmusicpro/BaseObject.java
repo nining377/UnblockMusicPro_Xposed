@@ -6,7 +6,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author 躲雨的猫 序列化根

@@ -1,18 +1,6 @@
 package com.raincat.unblockmusicpro;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.util.Log;
-
-import java.util.Map;
-
 import de.robv.android.xposed.XSharedPreferences;
-
-import static de.robv.android.xposed.XposedHelpers.callMethod;
-import static de.robv.android.xposed.XposedHelpers.callStaticMethod;
-import static de.robv.android.xposed.XposedHelpers.findClass;
 
 /**
  * <pre>

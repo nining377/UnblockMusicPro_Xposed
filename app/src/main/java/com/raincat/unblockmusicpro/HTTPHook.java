@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -106,6 +107,7 @@ public class HTTPHook implements IHookerDispatcher {
                                                     preferences.edit().putBoolean("hook", true).apply();
                                                     Tools.showToastOnLooper(neteaseContext, "运行成功，当前优先选择" + Setting.getOriginString() + "音源");
                                                     firstToastShow = false;
+                                                    hook(neteaseContext, processName);
                                                 }
                                             }
                                         }
@@ -116,107 +118,109 @@ public class HTTPHook implements IHookerDispatcher {
                                     return;
                                 }
                             }
-
-                            if (processName.equals(Tools.HOOK_NAME) || processName.equals(Tools.HOOK_NAME + ":play")) {
-                                final SSLSocketFactory socketFactory = Tools.getSLLContext(codePath + File.separator + "ca.crt").getSocketFactory();
-                                final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
-                                if (versionCode == 110) {
-                                    //强制HTTP走本地代理
-                                    hookAllConstructors(findClass("okhttp3.a", neteaseContext.getClassLoader()), new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            if (param.args.length >= 9) {
-                                                param.args[8] = proxy;
-//                                                if (Setting.getSSL())
-//                                                    param.args[4] = socketFactory;
-                                            }
-                                        }
-                                    });
-                                } else if (versionCode >= 138) {
-                                    //强制返回正确MD5
-                                    CloudMusicPackage.init(neteaseContext);
-                                    hookMethod(CloudMusicPackage.Transfer.getCheckMd5Method(), new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            final Object[] array = (Object[]) param.args[3];
-                                            String path = param.args[0].toString();
-                                            array[5] = Tools.fileToMD5(path);
-                                            param.args[3] = array;
-                                        }
-                                    });
-
-                                    //强制走代理模式
-                                    hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            if (!hookStart) {
-                                                preferences = neteaseContext.getSharedPreferences("share", Context.MODE_MULTI_PROCESS);
-                                                hookStart = preferences.getBoolean("hook", false);
-                                            }
-                                            if (!hookStart)
-                                                return;
-
-                                            if (param.args.length == 3) {
-                                                Object client = param.args[0];
-                                                Object request = param.args[1];
-
-                                                Field urlField = request.getClass().getDeclaredField("url");
-                                                urlField.setAccessible(true);
-                                                Field proxyField = client.getClass().getDeclaredField("proxy");
-                                                proxyField.setAccessible(true);
-                                                Field sslSocketFactoryField = client.getClass().getDeclaredField("sslSocketFactory");
-                                                sslSocketFactoryField.setAccessible(true);
-                                                if (sslSocketFactory == null) {
-                                                    sslSocketFactory = sslSocketFactoryField.get(client);
-                                                }
-
-                                                Object urlObj = urlField.get(request);
-                                                if (urlObj.toString().contains("yyaac") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic") || urlObj.toString().contains("&thumbnail")) {
-                                                    proxyField.set(client, null);
-                                                    sslSocketFactoryField.set(client, sslSocketFactory);
-                                                } else {
-                                                    proxyField.set(client, proxy);
-                                                    sslSocketFactoryField.set(client, socketFactory);
-                                                }
-                                                param.args[0] = client;
-                                            }
-                                        }
-                                    });
-
-                                    //去广告和去升级
-                                    removeAd = Setting.getAd();
-                                    removeUpdate = Setting.getUpdate();
-                                    Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH);
-                                    Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH2);
-                                    findAndHookMethod("com.netease.cloudmusic.activity.LoadingAdActivity", neteaseContext.getClassLoader(),
-                                            "onCreate", Bundle.class, new XC_MethodHook() {
-                                                @Override
-                                                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                                                    ((Activity) param.thisObject).finish();
-                                                    param.setResult(null);
-                                                }
-                                            });
-                                    hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            if (param.args.length == 1) {
-                                                Object request = param.args[0];
-                                                Field httpUrl = request.getClass().getDeclaredField("url");
-                                                httpUrl.setAccessible(true);
-                                                Object urlObj = httpUrl.get(request);
-                                                if ((removeAd && urlObj.toString().contains("eapi/ad/")) || (removeUpdate && urlObj.toString().contains("android/version"))) {
-                                                    Field url = urlObj.getClass().getDeclaredField("url");
-                                                    url.setAccessible(true);
-                                                    url.set(urlObj, "https://33.123.321.14/");
-                                                    param.args[0] = request;
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            }
                         }
                     });
+        }
+    }
+
+    private void hook(Context neteaseContext, String processName) {
+        if (processName.equals(Tools.HOOK_NAME) || processName.equals(Tools.HOOK_NAME + ":play")) {
+            final SSLSocketFactory socketFactory = Tools.getSLLContext(codePath + File.separator + "ca.crt").getSocketFactory();
+            final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 23338));
+            if (versionCode == 110) {
+                //强制HTTP走本地代理
+                hookAllConstructors(findClass("okhttp3.a", neteaseContext.getClassLoader()), new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        if (param.args.length >= 9) {
+                            param.args[8] = proxy;
+//                                                if (Setting.getSSL())
+//                                                    param.args[4] = socketFactory;
+                        }
+                    }
+                });
+            } else if (versionCode >= 138) {
+                //强制返回正确MD5
+                CloudMusicPackage.init(neteaseContext);
+                hookMethod(CloudMusicPackage.Transfer.getCheckMd5Method(), new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        final Object[] array = (Object[]) param.args[3];
+                        String path = param.args[0].toString();
+                        array[5] = Tools.fileToMD5(path);
+                        param.args[3] = array;
+                    }
+                });
+
+                //强制走代理模式
+                hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        if (!hookStart) {
+                            preferences = neteaseContext.getSharedPreferences("share", Context.MODE_MULTI_PROCESS);
+                            hookStart = preferences.getBoolean("hook", false);
+                        }
+                        if (!hookStart)
+                            return;
+
+                        if (param.args.length == 3) {
+                            Object client = param.args[0];
+                            Object request = param.args[1];
+
+                            Field urlField = request.getClass().getDeclaredField("url");
+                            urlField.setAccessible(true);
+                            Field proxyField = client.getClass().getDeclaredField("proxy");
+                            proxyField.setAccessible(true);
+                            Field sslSocketFactoryField = client.getClass().getDeclaredField("sslSocketFactory");
+                            sslSocketFactoryField.setAccessible(true);
+                            if (sslSocketFactory == null) {
+                                sslSocketFactory = sslSocketFactoryField.get(client);
+                            }
+
+                            Object urlObj = urlField.get(request);
+                            if (urlObj.toString().contains("yyaac") || urlObj.toString().contains("eapi/cloud") || urlObj.toString().contains("ymusic") || urlObj.toString().contains("&thumbnail")) {
+                                proxyField.set(client, null);
+                                sslSocketFactoryField.set(client, sslSocketFactory);
+                            } else {
+                                proxyField.set(client, proxy);
+                                sslSocketFactoryField.set(client, socketFactory);
+                            }
+                            param.args[0] = client;
+                        }
+                    }
+                });
+
+                //去广告和去升级
+                removeAd = Setting.getAd();
+                removeUpdate = Setting.getUpdate();
+                Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH);
+                Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH2);
+                findAndHookMethod("com.netease.cloudmusic.activity.LoadingAdActivity", neteaseContext.getClassLoader(),
+                        "onCreate", Bundle.class, new XC_MethodHook() {
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                                ((Activity) param.thisObject).finish();
+                                param.setResult(null);
+                            }
+                        });
+                hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        if (param.args.length == 1) {
+                            Object request = param.args[0];
+                            Field httpUrl = request.getClass().getDeclaredField("url");
+                            httpUrl.setAccessible(true);
+                            Object urlObj = httpUrl.get(request);
+                            if ((removeAd && urlObj.toString().contains("eapi/ad/")) || (removeUpdate && urlObj.toString().contains("android/version"))) {
+                                Field url = urlObj.getClass().getDeclaredField("url");
+                                url.setAccessible(true);
+                                url.set(urlObj, "https://33.123.321.14/");
+                                param.args[0] = request;
+                            }
+                        }
+                    }
+                });
+            }
         }
     }
 
