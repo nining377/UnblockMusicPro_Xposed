@@ -3,7 +3,6 @@ package com.raincat.unblockmusicpro;
 import android.content.Context;
 
 import com.raincat.netutils.HTTPS_GET;
-import com.raincat.netutils.HTTP_POST;
 import com.raincat.netutils.NetCallBack;
 
 import org.json.JSONArray;
@@ -29,15 +28,15 @@ public class Update extends BaseObject {
     private final static String appUrl = "https://api.github.com/repos/nining377/UnblockMusicPro_Xposed/releases/latest";
     private final static String scriptUrl = "https://api.github.com/repos/nondanee/UnblockNeteaseMusic/releases/latest";
 
-    public static void getAppVersion(Context context, NetCallBack back) {
+    static void getAppVersion(Context context, NetCallBack back) {
         new HTTPS_GET(context, appUrl, null, false, false, back);
     }
 
-    public static void getScriptVersion(Context context, NetCallBack back) {
+    static void getScriptVersion(Context context, NetCallBack back) {
         new HTTPS_GET(context, scriptUrl, null, false, false, back);
     }
 
-    public static Update getUpdate(Context context, JSONObject jsonObject) throws JSONException {
+    static Update getUpdate(Context context, JSONObject jsonObject) throws JSONException {
         Update update = new Update();
         update.version = getJsonString(jsonObject, "tag_name").replaceAll("[^0-9.]", "");
         JSONArray array = jsonObject.getJSONArray("assets");

@@ -1,10 +1,8 @@
 package com.raincat.unblockmusicpro;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.os.Bundle;
 import android.widget.Toast;
 
 import com.stericson.RootShell.execution.Command;
@@ -18,7 +16,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -28,7 +25,6 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import static de.robv.android.xposed.XposedBridge.hookAllConstructors;
 import static de.robv.android.xposed.XposedBridge.hookAllMethods;
-import static de.robv.android.xposed.XposedBridge.hookMethod;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 import static de.robv.android.xposed.XposedHelpers.findClass;
 
@@ -43,12 +39,9 @@ import static de.robv.android.xposed.XposedHelpers.findClass;
  */
 
 public class HTTPHook implements IHookerDispatcher {
-    private static final Pattern REX_MD5 = Pattern.compile("[a-f0-9]{32}", Pattern.CASE_INSENSITIVE);
     private static int versionCode = 0;
     private static String codePath = "";
     private static boolean firstToastShow = true;
-    private static boolean removeAd = true;
-    private static boolean removeUpdate = true;
     private static boolean hookStart = false;
     private static boolean showLog = false;
 
@@ -85,8 +78,6 @@ public class HTTPHook implements IHookerDispatcher {
                             if (processName.equals(Tools.HOOK_NAME)) {
                                 if (!initData(neteaseContext))
                                     return;
-                                if (Setting.getAd())
-                                    Tools.deleteDirectory(Tools.neteaseCachePath);
                             } else if (processName.equals(Tools.HOOK_NAME + ":play")) {
                                 if (initData(neteaseContext)) {
                                     String port = " -p 23338:23339";
@@ -124,7 +115,7 @@ public class HTTPHook implements IHookerDispatcher {
                                     //强制HTTP走本地代理
                                     hookAllConstructors(findClass("okhttp3.a", neteaseContext.getClassLoader()), new XC_MethodHook() {
                                         @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                                        protected void beforeHookedMethod(MethodHookParam param) {
                                             if (param.args.length >= 9) {
                                                 param.args[8] = proxy;
 //                                                if (Setting.getSSL())
@@ -133,18 +124,6 @@ public class HTTPHook implements IHookerDispatcher {
                                         }
                                     });
                                 } else if (versionCode >= 138) {
-                                    //强制返回正确MD5
-                                    CloudMusicPackage.init(neteaseContext);
-                                    hookMethod(CloudMusicPackage.Transfer.getCheckMd5Method(), new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            final Object[] array = (Object[]) param.args[3];
-                                            String path = param.args[0].toString();
-                                            array[5] = Tools.fileToMD5(path);
-                                            param.args[3] = array;
-                                        }
-                                    });
-
                                     //强制走代理模式
                                     hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
                                         @Override
@@ -179,37 +158,6 @@ public class HTTPHook implements IHookerDispatcher {
                                                     sslSocketFactoryField.set(client, socketFactory);
                                                 }
                                                 param.args[0] = client;
-                                            }
-                                        }
-                                    });
-
-                                    //去广告和去升级
-                                    removeAd = Setting.getAd();
-                                    removeUpdate = Setting.getUpdate();
-                                    Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH);
-                                    Tools.deleteDirectory(CloudMusicPackage.CACHE_PATH2);
-                                    findAndHookMethod("com.netease.cloudmusic.activity.LoadingAdActivity", neteaseContext.getClassLoader(),
-                                            "onCreate", Bundle.class, new XC_MethodHook() {
-                                                @Override
-                                                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                                                    ((Activity) param.thisObject).finish();
-                                                    param.setResult(null);
-                                                }
-                                            });
-                                    hookAllMethods(findClass("okhttp3.OkHttpClient", neteaseContext.getClassLoader()), "newCall", new XC_MethodHook() {
-                                        @Override
-                                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                                            if (param.args.length == 1) {
-                                                Object request = param.args[0];
-                                                Field httpUrl = request.getClass().getDeclaredField("url");
-                                                httpUrl.setAccessible(true);
-                                                Object urlObj = httpUrl.get(request);
-                                                if ((removeAd && urlObj.toString().contains("eapi/ad/")) || (removeUpdate && urlObj.toString().contains("android/version"))) {
-                                                    Field url = urlObj.getClass().getDeclaredField("url");
-                                                    url.setAccessible(true);
-                                                    url.set(urlObj, "https://33.123.321.14/");
-                                                    param.args[0] = request;
-                                                }
                                             }
                                         }
                                     });

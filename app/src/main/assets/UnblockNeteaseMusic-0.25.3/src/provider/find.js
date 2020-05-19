@@ -1,7 +1,7 @@
 const cache = require('../cache')
 const request = require('../request')
 
-const filter = (object, keys) => Object.keys(object).filter(key => keys.includes(key)).reduce((result, key) => Object.assign(result, {[key]: object[key]}), {})
+const filter = (object, keys) => Object.keys(object).reduce((result, key) => Object.assign(result, keys.includes(key) && {[key]: object[key]}), {})
 // Object.keys(object).filter(key => !keys.includes(key)).forEach(key => delete object[key])
 
 const limit = text => {
@@ -22,6 +22,8 @@ const find = id => {
 		info.name = (info.name || '')
 			.replace(/（\s*cover[:：\s][^）]+）/i, '')
 			.replace(/\(\s*cover[:：\s][^\)]+\)/i, '')
+			.replace(/（\s*翻自[:：\s][^）]+）/, '')
+			.replace(/\(\s*翻自[:：\s][^\)]+\)/, '')
 		info.album = filter(jsonBody.songs[0].album, ['id', 'name'])
 		info.artists = jsonBody.songs[0].artists.map(artist => filter(artist, ['id', 'name']))
 		info.keyword = info.name + ' - ' + limit(info.artists.map(artist => artist.name)).join(' / ')

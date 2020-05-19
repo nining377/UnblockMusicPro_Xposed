@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -53,7 +52,7 @@ import javax.net.ssl.TrustManagerFactory;
  */
 
 public class Tools {
-    static String nowVersion = "0.24.1";
+    static String nowVersion = "0.25.3";
 
     final static String HOOK_NAME = "com.netease.cloudmusic";
     final static String SDCardPath = Environment.getExternalStorageDirectory() + "/UnblockMusicPro";
@@ -71,9 +70,6 @@ public class Tools {
 
     /**
      * 获取线程名称
-     *
-     * @param context
-     * @return
      */
     static String getCurrentProcessName(Context context) {
         int pid = android.os.Process.myPid();
@@ -90,14 +86,10 @@ public class Tools {
 
     /**
      * 从assets中拷贝文件
-     *
-     * @param context
-     * @param oldPath
-     * @param codePath
      */
     static void copyFilesAssets(Context context, String oldPath, String codePath) {
         try {
-            String fileNames[] = context.getAssets().list(oldPath);//获取assets目录下的所有文件及目录名
+            String[] fileNames = context.getAssets().list(oldPath);//获取assets目录下的所有文件及目录名
             if (fileNames.length > 0) {//如果是目录
                 File file = new File(codePath);
                 file.mkdirs();//如果文件夹不存在，则递归
@@ -123,9 +115,6 @@ public class Tools {
 
     /**
      * 从SD卡中拷贝文件
-     *
-     * @param oldPath
-     * @param newPath
      */
     static void copyFilesFromSD(String oldPath, String newPath) {
         try {
@@ -169,9 +158,6 @@ public class Tools {
 
     /**
      * 从SD卡中读取一个文件
-     *
-     * @param path
-     * @return
      */
     static String readFileFromSD(String path) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -196,12 +182,8 @@ public class Tools {
 
     /**
      * 写入内容到一个文件
-     *
-     * @param path
-     * @param content
-     * @return
      */
-    static boolean writeFileFromSD(String path, String content) {
+    static void writeFileFromSD(String path, String content) {
         BufferedWriter out = null;
         try {
             File file = new File(path);
@@ -209,7 +191,6 @@ public class Tools {
             out.write(content);
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         } finally {
             try {
                 if (out != null) {
@@ -219,7 +200,6 @@ public class Tools {
                 e.printStackTrace();
             }
         }
-        return true;
     }
 
     static boolean unzipFile(String zipFileString, String outPathString) {
@@ -311,9 +291,6 @@ public class Tools {
 
     /**
      * 弹窗
-     *
-     * @param context
-     * @param message
      */
     static void showToastOnLooper(final Context context, String message) {
         try {
@@ -332,9 +309,6 @@ public class Tools {
 
     /**
      * ADB命令
-     *
-     * @param context
-     * @param command
      */
     static void shell(Context context, Command command) {
         try {
@@ -346,7 +320,7 @@ public class Tools {
         }
     }
 
-    /**
+    /*
      * 删除指定文件夹下所有文件及文件夹本身
      *
      * @param path
@@ -370,14 +344,14 @@ public class Tools {
         flag = true;
         File[] files = dirFile.listFiles();
         //遍历删除文件夹下的所有文件(包括子目录)
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].isFile()) {
+        for (File file : files) {
+            if (file.isFile()) {
                 //删除子文件
-                flag = deleteFile(files[i].getAbsolutePath());
+                flag = deleteFile(file.getAbsolutePath());
                 if (!flag) break;
             } else {
                 //删除子目录
-                flag = deleteDirectory(files[i].getAbsolutePath());
+                flag = deleteDirectory(file.getAbsolutePath());
                 if (!flag) break;
             }
         }
@@ -402,9 +376,6 @@ public class Tools {
 
     /**
      * 获取CA证书
-     *
-     * @param caPath
-     * @return
      */
     static SSLContext getSLLContext(String caPath) {
         SSLContext sslContext = null;
@@ -449,14 +420,10 @@ public class Tools {
 
     /**
      * 计算MD5值
-     *
-     * @param filePath
-     * @return
      */
     public static String fileToMD5(String filePath) {
-        InputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(filePath); // Create an FileInputStream instance according to the filepath
+        try (InputStream inputStream = new FileInputStream(filePath)) {
+            // Create an FileInputStream instance according to the filepath
             byte[] buffer = new byte[1024]; // The buffer to read the file
             MessageDigest digest = MessageDigest.getInstance("MD5"); // Get a MD5 instance
             int numRead = 0; // Record how many bytes have been read
@@ -469,21 +436,15 @@ public class Tools {
             return convertHashToString(md5Bytes); // Call the function to convert to hex digits
         } catch (Exception e) {
             return null;
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close(); // Close the InputStream
-                } catch (Exception e) {
-                }
-            }
         }
+        // Close the InputStream
     }
 
     private static String convertHashToString(byte[] hashBytes) {
-        String returnVal = "";
-        for (int i = 0; i < hashBytes.length; i++) {
-            returnVal += Integer.toString((hashBytes[i] & 0xff) + 0x100, 16).substring(1);
+        StringBuilder returnVal = new StringBuilder();
+        for (byte hashByte : hashBytes) {
+            returnVal.append(Integer.toString((hashByte & 0xff) + 0x100, 16).substring(1));
         }
-        return returnVal.toLowerCase();
+        return returnVal.toString().toLowerCase();
     }
 }

@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/UnblockMusicPro_Xposed.iml" filepath="$PROJECT_DIR$/UnblockMusicPro_Xposed.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/UnblockMusicPro_Xposed.iml" filepath="$PROJECT_DIR$/UnblockMusicPro_Xposed.iml" group="UnblockMusicPro_Xposed" />
+      <module fileurl="file://$PROJECT_DIR$/hotxposed/UnblockMusicPro_Xposed-hotxposed.iml" filepath="$PROJECT_DIR$/hotxposed/UnblockMusicPro_Xposed-hotxposed.iml" group="UnblockMusicPro_Xposed/hotxposed" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="UnblockMusicPro_Xposed/app" />
       <module fileurl="file://$PROJECT_DIR$/hotxposed/hotxposed.iml" filepath="$PROJECT_DIR$/hotxposed/hotxposed.iml" />
     </modules>
   </component>

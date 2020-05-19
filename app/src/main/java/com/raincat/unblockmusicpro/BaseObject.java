@@ -6,20 +6,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author 躲雨的猫 序列化根
  */
 public class BaseObject implements Serializable {
     private static final long serialVersionUID = 1L;
-    public static String tag;
+    private static String tag;
 
-    public BaseObject() {
+    BaseObject() {
         tag = super.getClass().toString();
     }
 
-    protected static String getJsonString(JSONObject obj, String key) throws JSONException {
+    static String getJsonString(JSONObject obj, String key) throws JSONException {
         if (obj != null && obj.length() != 0) {
             if (!obj.isNull(key)) {
                 return obj.getString(key);
