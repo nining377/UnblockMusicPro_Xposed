@@ -46,6 +46,7 @@ public class HTTPHook implements IHookerDispatcher {
     private static boolean showLog = false;
 
     private static Object sslSocketFactory = null;
+    private static String sslSocketFactoryFieldString = null;
     private static SharedPreferences preferences;
 
     @Override
@@ -124,8 +125,14 @@ public class HTTPHook implements IHookerDispatcher {
                                         }
                                     });
                                 } else if (versionCode >= 138) {
+                                    String realCallClassString = "okhttp3.RealCall";
+                                    sslSocketFactoryFieldString = "sslSocketFactory";
+                                    if (versionCode >= 7001080) {
+                                        realCallClassString = "okhttp3.internal.connection.RealCall";
+                                        sslSocketFactoryFieldString = "sslSocketFactoryOrNull";
+                                    }
                                     //强制走代理模式
-                                    hookAllMethods(findClass("okhttp3.RealCall", neteaseContext.getClassLoader()), "newRealCall", new XC_MethodHook() {
+                                    hookAllConstructors(findClass(realCallClassString, neteaseContext.getClassLoader()), new XC_MethodHook() {
                                         @Override
                                         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                                             if (!hookStart) {
@@ -143,7 +150,7 @@ public class HTTPHook implements IHookerDispatcher {
                                                 urlField.setAccessible(true);
                                                 Field proxyField = client.getClass().getDeclaredField("proxy");
                                                 proxyField.setAccessible(true);
-                                                Field sslSocketFactoryField = client.getClass().getDeclaredField("sslSocketFactory");
+                                                Field sslSocketFactoryField = client.getClass().getDeclaredField(sslSocketFactoryFieldString);
                                                 sslSocketFactoryField.setAccessible(true);
                                                 if (sslSocketFactory == null) {
                                                     sslSocketFactory = sslSocketFactoryField.get(client);

@@ -24,7 +24,8 @@ public class ErrorCode {
                 case 3:
                 case 4:
                 case 7:
-                    Toast.makeText(context, "网络连接失败，请查看你的网络状态",Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(context, "网络连接失败，请查看你的网络状态",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "检查更新失败，请确认github是否被墙",Toast.LENGTH_SHORT).show();
                     break;
                 case 5:
                     Toast.makeText(context, "数据解析错误，请重试",Toast.LENGTH_SHORT).show();
