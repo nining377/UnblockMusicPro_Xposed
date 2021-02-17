@@ -152,7 +152,7 @@ public class MainActivity extends PermissionProxyActivity {
 
         tv_version.setText(BuildConfig.VERSION_NAME);
         tv_perfect[0].setText("Google：4.3.1");
-        tv_perfect[1].setText("Global：6.0.0～7.2.0");
+        tv_perfect[1].setText("Global：6.0.0～8.1.10");
 
         share = getSharedPreferences("share", Context.MODE_WORLD_READABLE);
         originIndex = share.getInt("origin", 0);
